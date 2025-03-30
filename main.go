@@ -4,6 +4,7 @@ import (
 	"message-server/db"
 	"message-server/server"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -14,7 +15,12 @@ func main() {
 
 	defer pool.Close()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
+	}
+
 	server := server.InitMessageServer(pool)
 	http.HandleFunc("/ws", server.StartWebSocketServer)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+port, nil)
 }
