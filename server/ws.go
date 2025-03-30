@@ -9,18 +9,14 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
-
-var upgrader = websocket.Upgrader{
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-}
 
 var logger = log.New(os.Stdout, "chat server - ", log.Lshortfile)
 
 type MessageServer struct {
-	db *pgx.Conn
+	pool *pgxpool.Pool
 	upgrader websocket.Upgrader
 	senderID string
 }
@@ -37,17 +33,38 @@ type Message struct {
 
 var users = sync.Map{}
 
-func InitMessageServer(db *pgx.Conn) *MessageServer {
+func InitMessageServer(pool *pgxpool.Pool) *MessageServer {
+	godotenv.Load()
+	frontURL := os.Getenv("FRONTEND_URL")
+
+	if frontURL == "" {
+        logger.Println("Warning: FRONTEND_URL not set in .env")
+    }
+
+	upgrader := websocket.Upgrader{
+		ReadBufferSize: 1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			logger.Println("Origin:", origin)
+			if origin == frontURL || origin == "test_client" {
+				return true
+			}
+			return false
+		},
+	}
+
 	return &MessageServer{
-		db: db,
+		pool: pool,
 		upgrader: upgrader,
 	}
 }
 
 func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Fatalln(err)
+		logger.Printf("WebSocket upgrade failed: %v", err)
+        return
 	}
 
 	defer func() {
@@ -85,13 +102,13 @@ func (s *MessageServer) read(conn *websocket.Conn) {
 		}
 
 		sendMessage(message.ReceiverID, message.Text)
-		s.SaveMessage(s.db, message.Text, message.ReceiverID)
+		s.SaveMessage(&message)
 	}
 }
 
-func (s *MessageServer) SaveMessage(db *pgx.Conn, message, receiverID string) {
+func (s *MessageServer) SaveMessage(message *Message) {
 	query := "INSERT INTO messages (message, sender_id, receiver_id) VALUES ($1, $2, $3)"
-	_, err := db.Exec(context.Background(), query, message, s.senderID, receiverID)
+	_, err := s.pool.Exec(context.Background(), query, message.Text, s.senderID, message.ReceiverID)
 	if err != nil {
 		logger.Println(err)
 	}

@@ -2,28 +2,29 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-func CreateDBConnection() *pgx.Conn {
+func CreateDBConnection() (*pgxpool.Pool, error) {
 	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
 	if dbUrl == "" {
-		panic("DB_URL environment variable is not set")
+		return nil, fmt.Errorf("DB_URL not set in .env")
 	}
 
-	pgxConfig, err := pgx.ParseConfig(dbUrl)
+	poolConfig, err := pgxpool.ParseConfig(dbUrl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	conn, err := pgx.ConnectConfig(context.Background(), pgxConfig)
+	conn, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return conn
+	return conn, nil
 }

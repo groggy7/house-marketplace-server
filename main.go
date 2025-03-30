@@ -1,17 +1,20 @@
 package main
 
 import (
-	"context"
 	"message-server/db"
 	"message-server/server"
 	"net/http"
 )
 
 func main() {
-	conn := db.CreateDBConnection()
-	defer conn.Close(context.Background())
+	pool, err := db.CreateDBConnection()
+	if err != nil {
+		panic(err)
+	}
 
-	server := server.InitMessageServer(conn)
+	defer pool.Close()
+
+	server := server.InitMessageServer(pool)
 	http.HandleFunc("/ws", server.StartWebSocketServer)
 	http.ListenAndServe(":8080", nil)
 }
