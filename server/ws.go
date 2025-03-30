@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
@@ -34,7 +35,7 @@ type Message struct {
 	ReceiverID string `json:"receiver_id"`
 }
 
-var users = make(map[string]*websocket.Conn)
+var users = sync.Map{}
 
 func InitMessageServer(db *pgx.Conn) *MessageServer {
 	return &MessageServer{
@@ -51,7 +52,7 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 
 	defer func() {
 		if s.senderID != "" {
-			delete(users, s.senderID)
+			users.Delete(s.senderID)
 			logger.Println(fmt.Sprintf("User %s disconnected", s.senderID))
 		}
 		conn.Close()
@@ -69,7 +70,7 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	users[authMessage.UserID] = conn
+	users.Store(authMessage.UserID, conn) 
 	s.senderID = authMessage.UserID
 
 	s.read(conn)
@@ -83,7 +84,6 @@ func (s *MessageServer) read(conn *websocket.Conn) {
 			return
 		}
 
-		log.Println(fmt.Sprintf("Received message: %s, from: %s, to: %s", message.Text, s.senderID, message.ReceiverID))
 		sendMessage(message.ReceiverID, message.Text)
 		s.SaveMessage(s.db, message.Text, message.ReceiverID)
 	}
@@ -98,14 +98,12 @@ func (s *MessageServer) SaveMessage(db *pgx.Conn, message, receiverID string) {
 }
 
 func sendMessage(receiverID, message string) {
-	conn, ok := users[receiverID]
-	
+	conn, ok := users.Load(receiverID)
 	if !ok {
 		logger.Println(fmt.Sprintf("User %s not found", receiverID))
 		return
 	}
 
-	if err := conn.WriteJSON(map[string]string{"message": message}); err != nil {
-		logger.Println(err)
-	}
+	wsConn := conn.(*websocket.Conn)
+	wsConn.WriteJSON(map[string]string{"message": message})
 }
