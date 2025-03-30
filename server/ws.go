@@ -71,7 +71,6 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 
 	users[authMessage.UserID] = conn
 	s.senderID = authMessage.UserID
-	printActiveConnections()
 
 	s.read(conn)
 }
@@ -99,7 +98,6 @@ func (s *MessageServer) SaveMessage(db *pgx.Conn, message, receiverID string) {
 }
 
 func sendMessage(receiverID, message string) {
-	log.Println(fmt.Sprintf("Sending message: %s, to: %s", message, receiverID))
 	conn, ok := users[receiverID]
 	
 	if !ok {
@@ -109,11 +107,5 @@ func sendMessage(receiverID, message string) {
 
 	if err := conn.WriteJSON(map[string]string{"message": message}); err != nil {
 		logger.Println(err)
-	}
-}
-
-func printActiveConnections() {
-	for user, conn := range users {
-		logger.Println(fmt.Sprintf("User %s connected, connection: %v", user, conn.NetConn()))
 	}
 }
