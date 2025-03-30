@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,18 +15,17 @@ import (
 var logger = log.New(os.Stdout, "chat server - ", log.Lshortfile)
 
 type MessageServer struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
 	upgrader websocket.Upgrader
-	senderID string
 }
 
 type AuthMessage struct {
-    Type string `json:"type"`
-    UserID string `json:"user_id"`
+	Type   string `json:"type"`
+	UserID string `json:"user_id"`
 }
 
 type Message struct {
-	Text string `json:"text"`
+	Text       string `json:"text"`
 	ReceiverID string `json:"receiver_id"`
 }
 
@@ -38,15 +36,14 @@ func InitMessageServer(pool *pgxpool.Pool) *MessageServer {
 	frontURL := os.Getenv("FRONTEND_URL")
 
 	if frontURL == "" {
-        logger.Println("Warning: FRONTEND_URL not set in .env")
-    }
+		logger.Println("Warning: FRONTEND_URL not set in .env")
+	}
 
 	upgrader := websocket.Upgrader{
-		ReadBufferSize: 1024,
+		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
-			logger.Println("Origin:", origin)
 			if origin == frontURL || origin == "test_client" {
 				return true
 			}
@@ -55,7 +52,7 @@ func InitMessageServer(pool *pgxpool.Pool) *MessageServer {
 	}
 
 	return &MessageServer{
-		pool: pool,
+		pool:     pool,
 		upgrader: upgrader,
 	}
 }
@@ -64,63 +61,85 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Printf("WebSocket upgrade failed: %v", err)
-        return
+		return
 	}
-
-	defer func() {
-		if s.senderID != "" {
-			users.Delete(s.senderID)
-			logger.Println(fmt.Sprintf("User %s disconnected", s.senderID))
-		}
-		conn.Close()
-	}()
 
 	var authMessage AuthMessage
 	if err := conn.ReadJSON(&authMessage); err != nil {
 		logger.Println("Failed to read auth message:", err)
+		conn.Close()
 		return
 	}
 
 	if authMessage.Type != "auth" || authMessage.UserID == "" {
 		logger.Println("Invalid auth message:", authMessage)
 		conn.WriteJSON(map[string]string{"error": "Invalid auth message"})
+		conn.Close()
 		return
 	}
 
-	users.Store(authMessage.UserID, conn) 
-	s.senderID = authMessage.UserID
+	userID := authMessage.UserID
 
-	s.read(conn)
+	users.Store(userID, conn)
+	logger.Printf("User %s connected\n", userID)
+
+	defer func() {
+		users.Delete(userID)
+		conn.Close()
+		logger.Printf("User %s disconnected\n", userID)
+	}()
+
+	s.handleMessages(conn, userID)
 }
 
-func (s *MessageServer) read(conn *websocket.Conn) {
+func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 	for {
 		var message Message
 		if err := conn.ReadJSON(&message); err != nil {
-			logger.Println(err)
+			logger.Println("Read error:", err)
 			return
 		}
 
-		sendMessage(message.ReceiverID, message.Text)
-		s.SaveMessage(&message)
+		s.sendMessage(senderID, message.ReceiverID, message.Text)
+		s.SaveMessage(senderID, &message)
 	}
 }
 
-func (s *MessageServer) SaveMessage(message *Message) {
+func (s *MessageServer) SaveMessage(senderID string, message *Message) {
 	query := "INSERT INTO messages (message, sender_id, receiver_id) VALUES ($1, $2, $3)"
-	_, err := s.pool.Exec(context.Background(), query, message.Text, s.senderID, message.ReceiverID)
+	_, err := s.pool.Exec(context.Background(), query, message.Text, senderID, message.ReceiverID)
 	if err != nil {
 		logger.Println(err)
 	}
 }
 
-func sendMessage(receiverID, message string) {
+func (s *MessageServer) sendMessage(senderID, receiverID, message string) {
 	conn, ok := users.Load(receiverID)
 	if !ok {
-		logger.Println(fmt.Sprintf("User %s not found", receiverID))
+		logger.Printf("User %s not found\n", receiverID)
 		return
 	}
 
 	wsConn := conn.(*websocket.Conn)
-	wsConn.WriteJSON(map[string]string{"message": message})
+	if err := wsConn.WriteJSON(map[string]string{
+		"type":      "message",
+		"text":      message,
+		"sender_id": senderID,
+	}); err != nil {
+		logger.Println("Error sending to recipient:", err)
+		users.Delete(receiverID)
+		return
+	}
+
+	client, ok := users.Load(senderID)
+	if !ok {
+		logger.Printf("User %s not found\n", senderID)
+		return
+	}
+
+	clientConn := client.(*websocket.Conn)
+	if err := clientConn.WriteJSON(map[string]string{"status": "sent", "message": message}); err != nil {
+		logger.Println("Error sending confirmation to sender:", err)
+		return
+	}
 }
