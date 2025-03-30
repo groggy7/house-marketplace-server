@@ -2,31 +2,16 @@ package main
 
 import (
 	"context"
-	"os"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
+	"message-server/db"
+	"message-server/server"
+	"net/http"
 )
 
-func CreateDBConnection() {
-	godotenv.Load()
-	dbUrl := os.Getenv("DB_URL")
-	if dbUrl == "" {
-		panic("DB_URL environment variable is not set")
-	}
-
-	pgxConfig, err := pgx.ParseConfig(dbUrl)
-	if err != nil {
-		panic(err)
-	}
-
-	conn, err := pgx.ConnectConfig(context.Background(), pgxConfig)
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close(context.Background())
-}
-
 func main() {
-	CreateDBConnection()
+	conn := db.CreateDBConnection()
+	defer conn.Close(context.Background())
+
+	server := server.InitMessageServer(conn)
+	http.HandleFunc("/ws", server.StartWebSocketServer)
+	http.ListenAndServe(":8080", nil)
 }
