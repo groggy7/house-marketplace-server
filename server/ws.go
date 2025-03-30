@@ -95,10 +95,14 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 	for {
 		var message Message
-		if err := conn.ReadJSON(&message); err != nil {
-			logger.Println("Read error:", err)
-			return
-		}
+        if err := conn.ReadJSON(&message); err != nil {
+            if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+                logger.Println("WebSocket closed:", err)
+                return
+            }
+            logger.Println("Temporary read error:", err)
+            continue
+        }
 
 		s.sendMessage(senderID, message.ReceiverID, message.Text)
 		s.SaveMessage(senderID, &message)
