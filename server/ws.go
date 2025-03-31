@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -93,20 +95,32 @@ func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
-	for {
-		var message Message
+    for {
+        var message Message
         if err := conn.ReadJSON(&message); err != nil {
             if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
                 logger.Println("WebSocket closed:", err)
                 return
             }
             logger.Println("Temporary read error:", err)
+            
+            if _, ok := err.(*websocket.CloseError); ok {
+                logger.Println("Connection closed by client")
+                return
+            }
+            
+            if err == io.EOF || strings.Contains(err.Error(), "use of closed network connection") || 
+               strings.Contains(err.Error(), "unexpected EOF") {
+                logger.Println("Connection appears to be closed:", err)
+                return
+            }
+            
             continue
         }
 
-		s.sendMessage(senderID, message.ReceiverID, message.Text)
-		s.SaveMessage(senderID, &message)
-	}
+        s.sendMessage(senderID, message.ReceiverID, message.Text)
+        s.SaveMessage(senderID, &message)
+    }
 }
 
 func (s *MessageServer) SaveMessage(senderID string, message *Message) {
