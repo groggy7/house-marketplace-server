@@ -24,6 +24,7 @@ func main() {
 	http.HandleFunc("/ws", wsServer.StartWebSocketServer)
 	http.HandleFunc("POST /create_room", roomServer.CreateRoom)
 	http.HandleFunc("GET /get_rooms", roomServer.GetRooms)
+	http.HandleFunc("GET /messages", roomServer.GetRoomMessages)
 
 	http.ListenAndServe(":"+port, nil)
 }

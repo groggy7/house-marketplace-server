@@ -71,3 +71,21 @@ func (s *RoomServer) GetRooms(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	json.NewEncoder(rw).Encode(rooms)
 }
+
+func (s *RoomServer) GetRoomMessages(rw http.ResponseWriter, r *http.Request) {
+	roomID := r.URL.Query().Get("room_id")
+	if roomID == "" {
+		http.Error(rw, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := s.db.GetMessagesForRoom(roomID)
+	if err != nil {
+		http.Error(rw, "Failed to get chat rooms", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	json.NewEncoder(rw).Encode(messages)
+}

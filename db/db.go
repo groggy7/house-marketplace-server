@@ -10,6 +10,7 @@ import (
 )
 
 type Room struct {
+	RoomID          string `json:"room_id"`
 	PropertyID      string `json:"property_id"`
 	PropertyOwnerID string `json:"property_owner_id"`
 	CustomerID      string `json:"customer_id"`
@@ -62,7 +63,7 @@ func (db *ChatDB) CheckRoomExists(roomID string) (bool, error) {
 }
 
 func (db *ChatDB) GetRooms(customerID string) ([]Room, error) {
-	query := "SELECT (property_id, property_owner_id, customer_id) FROM rooms WHERE customer_id = $1"
+	query := "SELECT (id, property_id, property_owner_id, customer_id) FROM rooms WHERE customer_id = $1"
 	rows, err := db.conn.Query(context.Background(), query, customerID)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func (db *ChatDB) GetRooms(customerID string) ([]Room, error) {
 	var rooms []Room
 	for rows.Next() {
 		var room Room
-		if err := rows.Scan(&room.PropertyID, &room.PropertyOwnerID, &room.CustomerID); err != nil {
+		if err := rows.Scan(&room.RoomID, &room.PropertyID, &room.PropertyOwnerID, &room.CustomerID); err != nil {
 			return nil, err
 		}
 		rooms = append(rooms, room)
@@ -100,4 +101,43 @@ func (db *ChatDB) CheckUserInRoom(userID, roomID string) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func (db *ChatDB) GetMessagesForRoom(roomID string) ([]map[string]any, error) {
+	query := `
+		SELECT id, message, sender_id, room_id, created_at 
+		FROM messages 
+		WHERE room_id = $1 
+		ORDER BY created_at ASC
+	`
+
+	rows, err := db.conn.Query(context.Background(), query, roomID)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving messages: %w", err)
+	}
+	defer rows.Close()
+
+	messages := []map[string]any{}
+	for rows.Next() {
+		var id, message, senderID, roomID string
+		var createdAt any
+
+		if err := rows.Scan(&id, &message, &senderID, &roomID, &createdAt); err != nil {
+			return nil, fmt.Errorf("error scanning message row: %w", err)
+		}
+
+		messages = append(messages, map[string]any{
+			"id":         id,
+			"message":    message,
+			"sender_id":  senderID,
+			"room_id":    roomID,
+			"created_at": createdAt,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating message rows: %w", err)
+	}
+
+	return messages, nil
 }
