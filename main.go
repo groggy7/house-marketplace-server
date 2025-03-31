@@ -8,19 +8,22 @@ import (
 )
 
 func main() {
-	pool, err := db.CreateDBConnection()
+	db, err := db.NewChatDB()
 	if err != nil {
 		panic(err)
 	}
-
-	defer pool.Close()
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "80"
 	}
 
-	server := server.InitMessageServer(pool)
-	http.HandleFunc("/ws", server.StartWebSocketServer)
+	wsServer := server.InitMessageServer(db)
+	roomServer := server.InitRoomServer(db)
+
+	http.HandleFunc("/ws", wsServer.StartWebSocketServer)
+	http.HandleFunc("POST /create_room", roomServer.CreateRoom)
+	http.HandleFunc("GET /get_rooms", roomServer.GetRooms)
+
 	http.ListenAndServe(":"+port, nil)
 }
