@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
@@ -80,8 +81,8 @@ func InitMessageServer(db *db.ChatDB) *MessageServer {
 	}
 }
 
-func (s *MessageServer) StartWebSocketServer(w http.ResponseWriter, r *http.Request) {
-	conn, err := s.upgrader.Upgrade(w, r, nil)
+func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
+	conn, err := s.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		logger.Printf("WebSocket upgrade failed: %v", err)
 		return

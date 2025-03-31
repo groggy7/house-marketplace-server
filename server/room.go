@@ -1,9 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"message-server/db"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CreateChatRoomRequest struct {
@@ -26,66 +27,61 @@ func InitRoomServer(db *db.ChatDB) *RoomServer {
 	}
 }
 
-func (s *RoomServer) CreateRoom(rw http.ResponseWriter, r *http.Request) {
+func (s *RoomServer) CreateRoom(c *gin.Context) {
 	var request CreateChatRoomRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(rw, "Invalid request", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	if request.PropertyID == "" || request.PropertyOwnerID == "" || request.CustomerID == "" {
-		http.Error(rw, "Missing required fields", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
 		return
 	}
 
 	roomID, err := s.db.CreateRoom(request.PropertyID, request.PropertyOwnerID, request.CustomerID)
 	if err != nil {
-		http.Error(rw, "Failed to create chat room", http.StatusInternalServerError)
 		logger.Printf("Failed to create chat room: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat room"})
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
-	json.NewEncoder(rw).Encode(map[string]string{"room_id": roomID})
+	c.JSON(http.StatusOK, gin.H{"room_id": roomID})
 }
 
-func (s *RoomServer) GetRooms(rw http.ResponseWriter, r *http.Request) {
+func (s *RoomServer) GetRooms(c *gin.Context) {
 	var request GetRoomsRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(rw, "Invalid request", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	if request.CustomerID == "" {
-		http.Error(rw, "Missing required fields", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
 		return
 	}
 
 	rooms, err := s.db.GetRooms(request.CustomerID)
 	if err != nil {
-		http.Error(rw, "Failed to get chat rooms", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat rooms"})
 		return
 	}
 
-	rw.WriteHeader(http.StatusOK)
-	json.NewEncoder(rw).Encode(rooms)
+	c.JSON(http.StatusOK, rooms)
 }
 
-func (s *RoomServer) GetRoomMessages(rw http.ResponseWriter, r *http.Request) {
-	roomID := r.URL.Query().Get("room_id")
+func (s *RoomServer) GetRoomMessages(c *gin.Context) {
+	roomID := c.Query("room_id")
 	if roomID == "" {
-		http.Error(rw, "Missing required fields", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
 		return
 	}
 
 	messages, err := s.db.GetMessagesForRoom(roomID)
 	if err != nil {
-		http.Error(rw, "Failed to get chat rooms", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat rooms"})
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
-	json.NewEncoder(rw).Encode(messages)
+	c.JSON(http.StatusOK, messages)
 }

@@ -3,8 +3,9 @@ package main
 import (
 	"message-server/db"
 	"message-server/server"
-	"net/http"
-	"os"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -13,18 +14,23 @@ func main() {
 		panic(err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "80"
-	}
+	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	wsServer := server.InitMessageServer(db)
 	roomServer := server.InitRoomServer(db)
 
-	http.HandleFunc("/ws", wsServer.StartWebSocketServer)
-	http.HandleFunc("POST /create_room", roomServer.CreateRoom)
-	http.HandleFunc("GET /get_rooms", roomServer.GetRooms)
-	http.HandleFunc("GET /messages", roomServer.GetRoomMessages)
+	router.GET("/ws", wsServer.StartWebSocketServer)
 
-	http.ListenAndServe(":"+port, nil)
+	router.POST("/create_room", roomServer.CreateRoom)
+	router.POST("/get_rooms", roomServer.GetRooms)
+	router.GET("/messages", roomServer.GetRoomMessages)
+
+	router.Run(":80")
 }
