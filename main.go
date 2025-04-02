@@ -4,11 +4,9 @@ import (
 	"context"
 	"message-server/internal/controller"
 	"message-server/internal/repository"
-	"message-server/internal/room"
+	"message-server/internal/usecases"
 	"os"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -30,25 +28,12 @@ func main() {
 		panic(err)
 	}
 
-	router := gin.Default()
-
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
-		AllowCredentials: true,
-	}))
-
 	roomRepository := repository.NewRoomRepository(pool)
-	roomService := room.NewRoomService(roomRepository)
-	wsServer := controller.InitMessageServer(roomService)
-	roomServer := controller.InitRoomServer(roomService)
+	roomUseCase := usecases.NewRoomUseCase(roomRepository)
 
-	router.GET("/ws", wsServer.StartWebSocketServer)
+	authRepository := repository.NewAuthRepository(pool)
+	authUseCase := usecases.NewAuthUseCase(authRepository)
 
-	router.POST("/room", roomServer.CreateRoom)
-	router.GET("/room/:customer_id", roomServer.GetRooms)
-	router.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
-
+	router := controller.NewRouter(roomUseCase, authUseCase)
 	router.Run(":80")
 }

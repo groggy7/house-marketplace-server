@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"message-server/internal/room"
+	"message-server/internal/domain"
+	"message-server/internal/usecases"
 	"message-server/pkg"
 	"net/http"
 	"os"
@@ -25,13 +26,13 @@ const (
 )
 
 type MessageServer struct {
-	roomService room.RoomService
+	roomService usecases.RoomUseCase
 	upgrader    websocket.Upgrader
 	clients     map[string]*websocket.Conn
 	mutex       sync.RWMutex
 }
 
-func InitMessageServer(roomService room.RoomService) *MessageServer {
+func InitMessageServer(svc *usecases.RoomUseCase) *MessageServer {
 	godotenv.Load()
 	frontURL := os.Getenv("FRONTEND_URL")
 
@@ -52,7 +53,7 @@ func InitMessageServer(roomService room.RoomService) *MessageServer {
 	}
 
 	return &MessageServer{
-		roomService: roomService,
+		roomService: *svc,
 		upgrader:    upgrader,
 		clients:     make(map[string]*websocket.Conn),
 	}
@@ -72,10 +73,10 @@ func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
 		return nil
 	})
 
-	var authMessage room.AuthMessage
+	var authMessage domain.AuthMessage
 	if err := conn.ReadJSON(&authMessage); err != nil {
 		pkg.Logger.Println("Failed to read auth message:", err)
-		conn.WriteJSON(room.MessageResponse{
+		conn.WriteJSON(domain.MessageResponse{
 			Type:  "error",
 			Error: "Authentication failed: " + err.Error(),
 		})
@@ -85,7 +86,7 @@ func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
 
 	if !validateAuthMessage(&authMessage) {
 		pkg.Logger.Println("Invalid auth message:", authMessage)
-		conn.WriteJSON(room.MessageResponse{
+		conn.WriteJSON(domain.MessageResponse{
 			Type:  "error",
 			Error: "Invalid authentication message",
 		})
@@ -105,7 +106,7 @@ func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
 
 	if exists {
 		pkg.Logger.Printf("User %s already has an active connection, closing old one", userID)
-		oldConn.WriteJSON(room.MessageResponse{
+		oldConn.WriteJSON(domain.MessageResponse{
 			Type:   "disconnect",
 			Status: "replaced",
 			Error:  "New connection established from another device",
@@ -113,7 +114,7 @@ func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
 		oldConn.Close()
 	}
 
-	conn.WriteJSON(room.MessageResponse{
+	conn.WriteJSON(domain.MessageResponse{
 		Type:      "auth_success",
 		Status:    "connected",
 		Timestamp: time.Now().Unix(),
@@ -155,7 +156,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 	}()
 
 	for {
-		var message room.ChatMessage
+		var message domain.ChatMessage
 		if err := conn.ReadJSON(&message); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				pkg.Logger.Println("WebSocket closed:", err)
@@ -179,7 +180,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 
 		if err := validateChatMessage(&message); err != nil {
 			pkg.Logger.Println("Invalid message format:", message)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     err.Error(),
 				Timestamp: time.Now().Unix(),
@@ -189,7 +190,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 
 		if message.SenderID != "" && message.SenderID != senderID {
 			pkg.Logger.Printf("Message sender ID mismatch: auth=%s, message=%s", senderID, message.SenderID)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Sender ID in message doesn't match authenticated user",
 				Timestamp: time.Now().Unix(),
@@ -204,7 +205,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 		exists, err := s.roomService.CheckRoomExists(message.RoomID)
 		if err != nil {
 			pkg.Logger.Println("Failed to check room existence:", err)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Database error when validating room",
 				Timestamp: time.Now().Unix(),
@@ -214,7 +215,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 
 		if !exists {
 			pkg.Logger.Println("Room does not exist:", message.RoomID)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Room does not exist",
 				Timestamp: time.Now().Unix(),
@@ -225,7 +226,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 		isMember, err := s.roomService.CheckUserInRoom(senderID, message.RoomID)
 		if err != nil {
 			pkg.Logger.Println("Failed to check room membership:", err)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Database error when validating room membership",
 				Timestamp: time.Now().Unix(),
@@ -235,7 +236,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 
 		if !isMember {
 			pkg.Logger.Printf("User %s is not a member of room %s", senderID, message.RoomID)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "You are not a member of this room",
 				Timestamp: time.Now().Unix(),
@@ -246,7 +247,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 		receiverIsMember, err := s.roomService.CheckUserInRoom(message.ReceiverID, message.RoomID)
 		if err != nil {
 			pkg.Logger.Println("Failed to check receiver room membership:", err)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Database error when validating receiver room membership",
 				Timestamp: time.Now().Unix(),
@@ -256,7 +257,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 
 		if !receiverIsMember {
 			pkg.Logger.Printf("Receiver %s is not a member of room %s", message.ReceiverID, message.RoomID)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Receiver is not a member of this room",
 				Timestamp: time.Now().Unix(),
@@ -267,7 +268,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 		timestamp := time.Now().Unix()
 		if err := s.roomService.SaveMessage(message.Text, senderID, message.RoomID); err != nil {
 			pkg.Logger.Printf("Error saving message to database: %v", err)
-			s.writeJSON(conn, room.MessageResponse{
+			s.writeJSON(conn, domain.MessageResponse{
 				Type:      "error",
 				Error:     "Failed to save message",
 				Timestamp: timestamp,
@@ -282,7 +283,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 			status = "delivered"
 		}
 
-		s.writeJSON(conn, room.MessageResponse{
+		s.writeJSON(conn, domain.MessageResponse{
 			Type:      "status",
 			Status:    status,
 			Text:      message.Text,
@@ -310,7 +311,7 @@ func (s *MessageServer) sendMessage(senderID, receiverID, text, roomID string) b
 	s.mutex.RUnlock()
 
 	if receiverConnected {
-		response := room.MessageResponse{
+		response := domain.MessageResponse{
 			Type:      "message",
 			Text:      text,
 			SenderID:  senderID,
@@ -325,11 +326,11 @@ func (s *MessageServer) sendMessage(senderID, receiverID, text, roomID string) b
 	return false
 }
 
-func validateAuthMessage(authMessage *room.AuthMessage) bool {
+func validateAuthMessage(authMessage *domain.AuthMessage) bool {
 	return authMessage.Type == "auth" && authMessage.UserID != ""
 }
 
-func validateChatMessage(message *room.ChatMessage) error {
+func validateChatMessage(message *domain.ChatMessage) error {
 	if message.Text == "" {
 		return fmt.Errorf("message text cannot be empty")
 	}

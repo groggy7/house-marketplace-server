@@ -1,7 +1,10 @@
 CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL,
-)
+    full_name TEXT NOT NULL,
+    username TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL
+);
 
 CREATE TABLE messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -18,5 +21,3 @@ CREATE TABLE rooms (
     property_owner_id TEXT NOT NULL,
     customer_id TEXT NOT NULL
 );
-
-CREATE UNIQUE INDEX idx_room ON rooms (id);

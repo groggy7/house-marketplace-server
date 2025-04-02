@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"message-server/internal/room"
+	"message-server/internal/domain"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -12,7 +12,7 @@ type roomRepository struct {
 	pool *pgxpool.Pool
 }
 
-func NewRoomRepository(pool *pgxpool.Pool) room.RoomRepository {
+func NewRoomRepository(pool *pgxpool.Pool) domain.RoomRepository {
 	return &roomRepository{pool: pool}
 }
 
@@ -38,7 +38,7 @@ func (db *roomRepository) CheckRoomExists(roomID string) (bool, error) {
 	return true, nil
 }
 
-func (db *roomRepository) GetRooms(customerID string) ([]room.Room, error) {
+func (db *roomRepository) GetRooms(customerID string) ([]domain.Room, error) {
 	query := "SELECT id, property_id, property_owner_id, customer_id FROM rooms WHERE customer_id = $1"
 	rows, err := db.pool.Query(context.Background(), query, customerID)
 	if err != nil {
@@ -46,9 +46,9 @@ func (db *roomRepository) GetRooms(customerID string) ([]room.Room, error) {
 	}
 	defer rows.Close()
 
-	var rooms []room.Room
+	var rooms []domain.Room
 	for rows.Next() {
-		var room room.Room
+		var room domain.Room
 		if err := rows.Scan(&room.RoomID, &room.PropertyID, &room.PropertyOwnerID, &room.CustomerID); err != nil {
 			return nil, err
 		}

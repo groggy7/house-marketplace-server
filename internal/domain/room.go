@@ -1,4 +1,11 @@
-package room
+package domain
+
+type Room struct {
+	RoomID          string `json:"room_id"`
+	PropertyID      string `json:"property_id"`
+	PropertyOwnerID string `json:"property_owner_id"`
+	CustomerID      string `json:"customer_id"`
+}
 
 type AuthMessage struct {
 	Type   string `json:"type"`
@@ -26,4 +33,13 @@ type CreateChatRoomRequest struct {
 	PropertyID      string `json:"property_id"`
 	PropertyOwnerID string `json:"property_owner_id"`
 	CustomerID      string `json:"customer_id"`
+}
+
+type RoomRepository interface {
+	CreateRoom(propertyID, propertyOwnerID, customerID string) (string, error)
+	CheckRoomExists(roomID string) (bool, error)
+	GetRooms(customerID string) ([]Room, error)
+	SaveMessage(text, senderID, roomID string) error
+	CheckUserInRoom(userID, roomID string) (bool, error)
+	GetMessagesForRoom(roomID string) ([]map[string]any, error)
 }
