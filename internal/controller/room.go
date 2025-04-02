@@ -1,34 +1,25 @@
-package server
+package controller
 
 import (
-	"message-server/db"
+	"message-server/internal/room"
+	"message-server/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type CreateChatRoomRequest struct {
-	PropertyID      string `json:"property_id"`
-	PropertyOwnerID string `json:"property_owner_id"`
-	CustomerID      string `json:"customer_id"`
-}
-
-type GetRoomsRequest struct {
-	CustomerID string `json:"customer_id"`
-}
-
 type RoomServer struct {
-	db *db.ChatDB
+	roomService room.RoomService
 }
 
-func InitRoomServer(db *db.ChatDB) *RoomServer {
+func InitRoomServer(roomService room.RoomService) *RoomServer {
 	return &RoomServer{
-		db: db,
+		roomService: roomService,
 	}
 }
 
 func (s *RoomServer) CreateRoom(c *gin.Context) {
-	var request CreateChatRoomRequest
+	var request room.CreateChatRoomRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -39,9 +30,9 @@ func (s *RoomServer) CreateRoom(c *gin.Context) {
 		return
 	}
 
-	roomID, err := s.db.CreateRoom(request.PropertyID, request.PropertyOwnerID, request.CustomerID)
+	roomID, err := s.roomService.CreateRoom(&request)
 	if err != nil {
-		logger.Printf("Failed to create chat room: %v", err)
+		pkg.Logger.Printf("Failed to create chat room: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat room"})
 		return
 	}
@@ -50,18 +41,14 @@ func (s *RoomServer) CreateRoom(c *gin.Context) {
 }
 
 func (s *RoomServer) GetRooms(c *gin.Context) {
-	var request GetRoomsRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
+	customerID := c.Param("customer_id")
 
-	if request.CustomerID == "" {
+	if customerID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
 		return
 	}
 
-	rooms, err := s.db.GetRooms(request.CustomerID)
+	rooms, err := s.roomService.GetRooms(customerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat rooms"})
 		return
@@ -71,13 +58,13 @@ func (s *RoomServer) GetRooms(c *gin.Context) {
 }
 
 func (s *RoomServer) GetRoomMessages(c *gin.Context) {
-	roomID := c.Query("room_id")
+	roomID := c.Param("room_id")
 	if roomID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
 		return
 	}
 
-	messages, err := s.db.GetMessagesForRoom(roomID)
+	messages, err := s.roomService.GetMessagesForRoom(roomID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat rooms"})
 		return
