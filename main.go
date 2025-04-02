@@ -35,5 +35,5 @@ func main() {
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 
 	router := router.NewRouter(roomUseCase, authUseCase)
-	router.Run(":80")
+	router.Run(":8080")
 }
