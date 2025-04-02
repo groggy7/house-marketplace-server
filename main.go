@@ -18,6 +18,11 @@ func main() {
 		panic("DB_URL not set in .env")
 	}
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	poolConfig, err := pgxpool.ParseConfig(dbUrl)
 	if err != nil {
 		panic(err)
@@ -35,5 +40,5 @@ func main() {
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 
 	router := router.NewRouter(roomUseCase, authUseCase)
-	router.Run(":8080")
+	router.Run(":" + port)
 }
