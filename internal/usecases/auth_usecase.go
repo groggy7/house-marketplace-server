@@ -42,7 +42,7 @@ func (s *AuthUseCase) Login(req *domain.LoginRequest) (string, error) {
 			return "", domain.ErrInvalidCredentials
 		}
 
-		return auth.GenerateToken(user.Username, user.Email)
+		return auth.GenerateToken(user.Username, user.Email, user.ID)
 	}
 
 	if req.Email != "" {
@@ -55,7 +55,7 @@ func (s *AuthUseCase) Login(req *domain.LoginRequest) (string, error) {
 			return "", domain.ErrInvalidCredentials
 		}
 
-		return auth.GenerateToken(user.Username, user.Email)
+		return auth.GenerateToken(user.Username, user.Email, user.ID)
 	}
 
 	return "", nil
