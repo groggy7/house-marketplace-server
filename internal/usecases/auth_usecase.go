@@ -61,6 +61,10 @@ func (s *AuthUseCase) Login(req *domain.LoginRequest) (string, error) {
 	return "", nil
 }
 
+func (s *AuthUseCase) CheckUserExists(userID string) (bool, error) {
+	return s.authRepo.CheckUserExists(userID)
+}
+
 func hashPassword(password string) (string, error) {
 	const cost = 12
 

@@ -32,7 +32,7 @@ type MessageResponse struct {
 type CreateChatRoomRequest struct {
 	PropertyID      string `json:"property_id"`
 	PropertyOwnerID string `json:"property_owner_id"`
-	CustomerID      string `json:"customer_id"`
+	CustomerID      string `json:"-"`
 }
 
 type RoomRepository interface {

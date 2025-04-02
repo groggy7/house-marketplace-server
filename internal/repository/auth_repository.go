@@ -43,3 +43,14 @@ func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
 	}
 	return &user, nil
 }
+
+func (r *authRepository) CheckUserExists(userID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`
+	var exists bool
+	err := r.pool.QueryRow(context.Background(), query, userID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}

@@ -1,6 +1,7 @@
-package controller
+package router
 
 import (
+	"message-server/internal/controller"
 	"message-server/internal/controller/auth"
 	"message-server/internal/usecases"
 
@@ -18,14 +19,15 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 		AllowCredentials: true,
 	}))
 
-	wsServer := InitMessageServer(roomUseCase)
-	roomServer := InitRoomServer(roomUseCase)
-	authHandler := NewAuthHandler(authUseCase)
+	wsServer := controller.InitMessageServer(roomUseCase, authUseCase)
+	roomServer := controller.InitRoomServer(roomUseCase)
+	authHandler := controller.NewAuthHandler(authUseCase)
 
 	public := router.Group("")
 	{
 		public.POST("/register", authHandler.Register)
 		public.POST("/login", authHandler.Login)
+		public.GET("/ws", wsServer.StartWebSocketServer)
 	}
 
 	protected := router.Group("")
@@ -34,7 +36,6 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 		protected.POST("/room", roomServer.CreateRoom)
 		protected.GET("/room/:customer_id", roomServer.GetRooms)
 		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
-		protected.GET("/ws", wsServer.StartWebSocketServer)
 	}
 
 	return router

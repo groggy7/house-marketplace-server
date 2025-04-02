@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"message-server/internal/controller"
+	"message-server/internal/controller/router"
 	"message-server/internal/repository"
 	"message-server/internal/usecases"
 	"os"
@@ -34,6 +34,6 @@ func main() {
 	authRepository := repository.NewAuthRepository(pool)
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 
-	router := controller.NewRouter(roomUseCase, authUseCase)
+	router := router.NewRouter(roomUseCase, authUseCase)
 	router.Run(":80")
 }

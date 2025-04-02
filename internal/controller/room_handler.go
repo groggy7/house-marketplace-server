@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"message-server/internal/controller/auth"
 	"message-server/internal/domain"
 	"message-server/internal/usecases"
 	"message-server/pkg"
@@ -20,7 +21,16 @@ func InitRoomServer(svc *usecases.RoomUseCase) *ChatHandler {
 }
 
 func (s *ChatHandler) CreateRoom(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Claims not found"})
+		return
+	}
+
+	user := claims.(*auth.Claims)
+
 	var request domain.CreateChatRoomRequest
+	request.CustomerID = user.UserID
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -42,7 +52,14 @@ func (s *ChatHandler) CreateRoom(c *gin.Context) {
 }
 
 func (s *ChatHandler) GetRooms(c *gin.Context) {
-	customerID := c.Param("customer_id")
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Claims not found"})
+		return
+	}
+
+	user := claims.(*auth.Claims)
+	customerID := user.UserID
 
 	if customerID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
