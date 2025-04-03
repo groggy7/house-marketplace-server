@@ -31,34 +31,42 @@ func (s *AuthUseCase) Register(req *domain.RegisterRequest) error {
 	return s.authRepo.CreateUser(user)
 }
 
-func (s *AuthUseCase) Login(req *domain.LoginRequest) (string, error) {
+func (s *AuthUseCase) Login(req *domain.LoginRequest) (*domain.User, string, error) {
 	if req.Username != "" {
 		user, err := s.authRepo.GetUserByUsername(req.Username)
 		if err != nil {
-			return "", domain.ErrUserNotFound
+			return nil, "", domain.ErrUserNotFound
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-			return "", domain.ErrInvalidCredentials
+			return nil, "", domain.ErrInvalidCredentials
 		}
 
-		return auth.GenerateToken(user.Username, user.Email, user.ID)
+		token, err := auth.GenerateToken(user.Username, user.Email, user.ID)
+		if err != nil {
+			return nil, "", err
+		}
+		return user, token, nil
 	}
 
 	if req.Email != "" {
 		user, err := s.authRepo.GetUserByEmail(req.Email)
 		if err != nil {
-			return "", domain.ErrUserNotFound
+			return nil, "", domain.ErrUserNotFound
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-			return "", domain.ErrInvalidCredentials
+			return nil, "", domain.ErrInvalidCredentials
 		}
 
-		return auth.GenerateToken(user.Username, user.Email, user.ID)
+		token, err := auth.GenerateToken(user.Username, user.Email, user.ID)
+		if err != nil {
+			return nil, "", err
+		}
+		return user, token, nil
 	}
 
-	return "", nil
+	return nil, "", nil
 }
 
 func (s *AuthUseCase) CheckUserExists(userID string) (bool, error) {

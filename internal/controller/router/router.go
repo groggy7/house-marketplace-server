@@ -36,6 +36,7 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	protected := router.Group("")
 	protected.Use(auth.JWTAuthMiddleware())
 	{
+		protected.GET("/user", authHandler.CheckIsLoggedIn)
 		protected.POST("/room", roomServer.CreateRoom)
 		protected.GET("/room", roomServer.GetRooms)
 		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)

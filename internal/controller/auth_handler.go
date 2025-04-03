@@ -39,7 +39,7 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := s.authUseCase.Login(&request)
+	user, token, err := s.authUseCase.Login(&request)
 	if err != nil {
 		switch err {
 		case domain.ErrInvalidCredentials:
@@ -52,23 +52,6 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	var user *domain.User
-	if request.Username != "" {
-		user, err = s.authUseCase.GetUserByUsername(request.Username)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			return
-		}
-	}
-
-	if request.Email != "" {
-		user, err = s.authUseCase.GetUserByEmail(request.Email)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			return
-		}
-	}
-
 	c.SetCookie("auth_token", token, 24*60*60*30, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
@@ -79,4 +62,8 @@ func (s *AuthHandler) Login(c *gin.Context) {
 			"avatar_url": user.AvatarURL,
 		},
 	})
+}
+
+func (s *AuthHandler) CheckIsLoggedIn(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "User is logged in"})
 }
