@@ -15,9 +15,8 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "https://house-marketplace-mocha-three.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Access-Control-Allow-Credentials"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
-		ExposeHeaders:    []string{"Set-Cookie"},
 	}
 
 	router.Use(cors.New(config))
