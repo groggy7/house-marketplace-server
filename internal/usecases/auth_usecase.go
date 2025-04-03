@@ -65,6 +65,14 @@ func (s *AuthUseCase) CheckUserExists(userID string) (bool, error) {
 	return s.authRepo.CheckUserExists(userID)
 }
 
+func (s *AuthUseCase) GetUserByUsername(username string) (*domain.User, error) {
+	return s.authRepo.GetUserByUsername(username)
+}
+
+func (s *AuthUseCase) GetUserByEmail(email string) (*domain.User, error) {
+	return s.authRepo.GetUserByEmail(email)
+}
+
 func hashPassword(password string) (string, error) {
 	const cost = 12
 

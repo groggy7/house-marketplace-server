@@ -52,6 +52,31 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	var user *domain.User
+	if request.Username != "" {
+		user, err = s.authUseCase.GetUserByUsername(request.Username)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+	}
+
+	if request.Email != "" {
+		user, err = s.authUseCase.GetUserByEmail(request.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+	}
+
 	c.SetCookie("auth_token", token, 60*60*24*30, "/", "", true, true)
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"user": gin.H{
+			"id":         user.ID,
+			"username":   user.Username,
+			"email":      user.Email,
+			"avatar_url": user.AvatarURL,
+		},
+	})
 }
