@@ -12,12 +12,15 @@ import (
 func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseCase) *gin.Engine {
 	router := gin.Default()
 
-	router.Use(cors.New(cors.Config{
+	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "https://house-marketplace-mocha-three.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Access-Control-Allow-Credentials"},
 		AllowCredentials: true,
-	}))
+		ExposeHeaders:    []string{"Set-Cookie"},
+	}
+
+	router.Use(cors.New(config))
 
 	wsServer := controller.InitMessageServer(roomUseCase, authUseCase)
 	roomServer := controller.InitRoomServer(roomUseCase)
@@ -34,7 +37,7 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	protected.Use(auth.JWTAuthMiddleware())
 	{
 		protected.POST("/room", roomServer.CreateRoom)
-		protected.GET("/room/:customer_id", roomServer.GetRooms)
+		protected.GET("/room", roomServer.GetRooms)
 		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
 	}
 

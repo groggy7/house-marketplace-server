@@ -59,14 +59,8 @@ func (s *ChatHandler) GetRooms(c *gin.Context) {
 	}
 
 	user := claims.(*auth.Claims)
-	customerID := user.UserID
 
-	if customerID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
-		return
-	}
-
-	rooms, err := s.roomUseCase.GetRooms(customerID)
+	rooms, err := s.roomUseCase.GetRooms(user.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat rooms"})
 		return
