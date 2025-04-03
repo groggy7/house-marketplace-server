@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"message-server/internal/controller/auth"
 	"message-server/internal/domain"
 	"message-server/internal/usecases"
 	"net/http"
@@ -58,6 +59,7 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		"user": gin.H{
 			"id":         user.ID,
 			"username":   user.Username,
+			"full_name":  user.FullName,
 			"email":      user.Email,
 			"avatar_url": user.AvatarURL,
 		},
@@ -65,5 +67,18 @@ func (s *AuthHandler) Login(c *gin.Context) {
 }
 
 func (s *AuthHandler) CheckIsLoggedIn(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "User is logged in"})
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	username := claims.(*auth.Claims).Username
+	user, err := s.authUseCase.GetUserByUsername(username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User is logged in", "user": user})
 }
