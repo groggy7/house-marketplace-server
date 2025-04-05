@@ -92,3 +92,23 @@ func (r *listingRepository) DeleteListing(id string) error {
 	_, err := r.pool.Exec(context.Background(), query, id)
 	return err
 }
+
+func (r *listingRepository) BookmarkListing(userID, listingID string) error {
+	query := `
+		INSERT INTO bookmarks (user_id, listing_id)
+		VALUES ($1, $2)
+	`
+
+	_, err := r.pool.Exec(context.Background(), query, userID, listingID)
+	return err
+}
+
+func (r *listingRepository) UnbookmarkListing(userID, listingID string) error {
+	query := `
+		DELETE FROM bookmarks
+		WHERE user_id = $1 AND listing_id = $2
+	`
+
+	_, err := r.pool.Exec(context.Background(), query, userID, listingID)
+	return err
+}

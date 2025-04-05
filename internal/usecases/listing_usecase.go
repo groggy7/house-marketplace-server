@@ -31,3 +31,11 @@ func (s *ListingUseCase) UpdateListing(listing *domain.Listing) error {
 func (s *ListingUseCase) DeleteListing(id string) error {
 	return s.listingRepo.DeleteListing(id)
 }
+
+func (s *ListingUseCase) BookmarkListing(userID, listingID string) error {
+	return s.listingRepo.BookmarkListing(userID, listingID)
+}
+
+func (s *ListingUseCase) UnbookmarkListing(userID, listingID string) error {
+	return s.listingRepo.UnbookmarkListing(userID, listingID)
+}

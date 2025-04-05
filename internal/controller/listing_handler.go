@@ -89,3 +89,39 @@ func (s *ListingHandler) DeleteListing(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Listing deleted successfully"})
 }
+
+func (s *ListingHandler) BookmarkListing(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	userID := claims.(*auth.Claims).UserID
+	listingID := c.Param("id")
+
+	if err := s.listingUseCase.BookmarkListing(userID, listingID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Listing bookmarked successfully"})
+}
+
+func (s *ListingHandler) UnbookmarkListing(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	userID := claims.(*auth.Claims).UserID
+	listingID := c.Param("id")
+
+	if err := s.listingUseCase.UnbookmarkListing(userID, listingID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Listing unbookmarked successfully"})
+}

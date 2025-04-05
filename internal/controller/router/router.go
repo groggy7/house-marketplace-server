@@ -52,6 +52,9 @@ func NewRouter(
 		protected.GET("/listing", listingHandler.GetListings)
 		protected.PUT("/listing/:id", listingHandler.UpdateListing)
 		protected.DELETE("/listing/:id", listingHandler.DeleteListing)
+
+		protected.POST("/listing/:id/bookmark", listingHandler.BookmarkListing)
+		protected.DELETE("/listing/:id/bookmark", listingHandler.UnbookmarkListing)
 	}
 
 	return router

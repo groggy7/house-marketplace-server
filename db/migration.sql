@@ -43,3 +43,9 @@ CREATE TABLE listings (
     is_wifi_available BOOLEAN NOT NULL DEFAULT FALSE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE bookmarks (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE
+);
