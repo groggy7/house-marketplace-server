@@ -67,6 +67,11 @@ func (s *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+func (s *AuthHandler) Logout(c *gin.Context) {
+	c.SetCookie("auth_token", "", -1, "/", "", false, false)
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
 func (s *AuthHandler) CheckIsLoggedIn(c *gin.Context) {
 	claims, exists := c.Get("claims")
 	if !exists {
