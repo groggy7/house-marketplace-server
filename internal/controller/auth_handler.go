@@ -54,7 +54,7 @@ func (s *AuthHandler) Login(c *gin.Context) {
 	}
 
 	c.SetSameSite(http.SameSiteNoneMode)
-	c.SetCookie("auth_token", token, 24*60*60*30, "/", "", false, false)
+	c.SetCookie("auth_token", token, 24*60*60*30, "/", "", true, true)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"user": gin.H{
