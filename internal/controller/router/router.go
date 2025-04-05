@@ -13,7 +13,7 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	router := gin.Default()
 
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://house-marketplace-mocha-three.vercel.app"},
+		AllowOrigins:     []string{"http://localhost:5173", "https://house-marketplace-581ed5aac951.herokuapp.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
