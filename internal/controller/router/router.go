@@ -9,7 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseCase) *gin.Engine {
+func NewRouter(
+	roomUseCase *usecases.RoomUseCase,
+	authUseCase *usecases.AuthUseCase,
+	listingUseCase *usecases.ListingUseCase,
+) *gin.Engine {
 	router := gin.Default()
 
 	config := cors.Config{
@@ -24,6 +28,7 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	wsServer := controller.InitMessageServer(roomUseCase, authUseCase)
 	roomServer := controller.InitRoomServer(roomUseCase)
 	authHandler := controller.NewAuthHandler(authUseCase)
+	listingHandler := controller.NewListingHandler(listingUseCase)
 
 	public := router.Group("")
 	{
@@ -36,10 +41,17 @@ func NewRouter(roomUseCase *usecases.RoomUseCase, authUseCase *usecases.AuthUseC
 	protected.Use(auth.JWTAuthMiddleware())
 	{
 		protected.GET("/user", authHandler.CheckIsLoggedIn)
+
 		protected.POST("/logout", authHandler.Logout)
 		protected.POST("/room", roomServer.CreateRoom)
 		protected.GET("/room", roomServer.GetRooms)
 		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
+
+		protected.POST("/listing", listingHandler.CreateListing)
+		protected.GET("/listing/:id", listingHandler.GetListingByID)
+		protected.GET("/listing", listingHandler.GetListings)
+		protected.PUT("/listing/:id", listingHandler.UpdateListing)
+		protected.DELETE("/listing/:id", listingHandler.DeleteListing)
 	}
 
 	return router

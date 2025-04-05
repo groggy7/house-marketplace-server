@@ -39,6 +39,9 @@ func main() {
 	authRepository := repository.NewAuthRepository(pool)
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 
-	router := router.NewRouter(roomUseCase, authUseCase)
+	listingRepository := repository.NewListingRepository(pool)
+	listingUseCase := usecases.NewListingUseCase(listingRepository)
+
+	router := router.NewRouter(roomUseCase, authUseCase, listingUseCase)
 	router.Run(":" + port)
 }
