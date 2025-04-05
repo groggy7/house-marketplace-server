@@ -16,7 +16,7 @@ func (s *ListingUseCase) CreateListing(request *domain.CreateListingRequest) (st
 	return s.listingRepo.CreateListing(request)
 }
 
-func (s *ListingUseCase) GetListingByID(id string) (*domain.Listing, error) {
+func (s *ListingUseCase) GetListingByID(id string) (*domain.GetListingDetailsResponse, error) {
 	return s.listingRepo.GetListingByID(id)
 }
 

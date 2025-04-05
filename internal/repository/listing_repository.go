@@ -34,17 +34,23 @@ func (r *listingRepository) CreateListing(req *domain.CreateListingRequest) (str
 	return id, err
 }
 
-func (r *listingRepository) GetListingByID(id string) (*domain.Listing, error) {
+func (r *listingRepository) GetListingByID(id string) (*domain.GetListingDetailsResponse, error) {
 	query := `
 		SELECT id, title, description, type, price, location, bathrooms, 
 		bedrooms, image_urls, is_air_conditioned, is_balcony_available, is_dryer_available,
-		is_heated, is_parking_available, is_pool_available, is_washer_available, is_wifi_available
+		is_heated, is_parking_available, is_pool_available, is_washer_available, is_wifi_available, user_id
 		FROM listings
 		WHERE id = $1
 	`
 
-	var listing domain.Listing
-	err := r.pool.QueryRow(context.Background(), query, id).Scan(&listing.ID, &listing.Title, &listing.Description, &listing.Type, &listing.Price, &listing.Location, &listing.Bathrooms, &listing.Bedrooms, &listing.ImageURLs, &listing.IsAirConditioned, &listing.IsBalconyAvailable, &listing.IsDryerAvailable, &listing.IsHeated, &listing.IsParkingAvailable, &listing.IsPoolAvailable, &listing.IsWasherAvailable, &listing.IsWifiAvailable)
+	var listing domain.GetListingDetailsResponse
+
+	err := r.pool.QueryRow(context.Background(), query, id).Scan(&listing.ID, &listing.Title,
+		&listing.Description, &listing.Type, &listing.Price, &listing.Location, &listing.Bathrooms,
+		&listing.Bedrooms, &listing.ImageURLs, &listing.IsAirConditioned, &listing.IsBalconyAvailable,
+		&listing.IsDryerAvailable, &listing.IsHeated, &listing.IsParkingAvailable,
+		&listing.IsPoolAvailable, &listing.IsWasherAvailable, &listing.IsWifiAvailable, &listing.UserID)
+
 	return &listing, err
 }
 
