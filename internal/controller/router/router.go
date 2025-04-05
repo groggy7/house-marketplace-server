@@ -35,6 +35,9 @@ func NewRouter(
 		public.POST("/register", authHandler.Register)
 		public.POST("/login", authHandler.Login)
 		public.GET("/ws", wsServer.StartWebSocketServer)
+
+		public.GET("/listing", listingHandler.GetListings)
+		public.GET("/listing/:id", listingHandler.GetListingByID)
 	}
 
 	protected := router.Group("")
@@ -48,8 +51,6 @@ func NewRouter(
 		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
 
 		protected.POST("/listing", listingHandler.CreateListing)
-		protected.GET("/listing/:id", listingHandler.GetListingByID)
-		protected.GET("/listing", listingHandler.GetListings)
 		protected.PUT("/listing/:id", listingHandler.UpdateListing)
 		protected.DELETE("/listing/:id", listingHandler.DeleteListing)
 
