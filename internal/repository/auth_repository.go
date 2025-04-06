@@ -28,10 +28,10 @@ func (r *authRepository) CreateUser(user *domain.User) error {
 }
 
 func (r *authRepository) GetUserByUsername(username string) (*domain.User, error) {
-	query := `SELECT id, full_name, username, email, avatar_url FROM users WHERE username = $1`
+	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE username = $1`
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, username).Scan(&user.ID,
-		&user.FullName, &user.Username, &user.Email, &user.AvatarURL)
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
 	if err != nil {
 		return nil, err
 	}
@@ -39,10 +39,10 @@ func (r *authRepository) GetUserByUsername(username string) (*domain.User, error
 }
 
 func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
-	query := `SELECT id, full_name, username, email, avatar_url FROM users WHERE email = $1`
+	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE email = $1`
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, email).Scan(&user.ID,
-		&user.FullName, &user.Username, &user.Email, &user.AvatarURL)
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
 	if err != nil {
 		return nil, err
 	}
