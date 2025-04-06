@@ -3,7 +3,8 @@ CREATE TABLE users (
     full_name TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    avatar_url TEXT
 );
 
 CREATE TABLE messages (
@@ -47,5 +48,6 @@ CREATE TABLE listings (
 CREATE TABLE bookmarks (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE
+    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    UNIQUE (user_id, listing_id)
 );
