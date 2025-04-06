@@ -125,3 +125,21 @@ func (s *ListingHandler) UnbookmarkListing(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Listing unbookmarked successfully"})
 }
+
+func (s *ListingHandler) GetBookmarkedListings(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	userID := claims.(*auth.Claims).UserID
+
+	listings, err := s.listingUseCase.GetBookmarkedListings(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, listings)
+}

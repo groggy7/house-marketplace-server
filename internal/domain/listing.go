@@ -91,4 +91,5 @@ type ListingRepository interface {
 	DeleteListing(id string) error
 	BookmarkListing(userID, listingID string) error
 	UnbookmarkListing(userID, listingID string) error
+	GetBookmarkedListings(userID string) ([]ListingInfo, error)
 }

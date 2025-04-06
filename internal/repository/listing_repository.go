@@ -118,3 +118,30 @@ func (r *listingRepository) UnbookmarkListing(userID, listingID string) error {
 	_, err := r.pool.Exec(context.Background(), query, userID, listingID)
 	return err
 }
+
+func (r *listingRepository) GetBookmarkedListings(userID string) ([]domain.ListingInfo, error) {
+	query := `
+		SELECT l.id, l.title, l.type, l.price, l.location, l.bathrooms, l.bedrooms, l.image_urls
+		FROM listings l
+		JOIN bookmarks b ON l.id = b.listing_id
+		WHERE b.user_id = $1
+	`
+
+	rows, err := r.pool.Query(context.Background(), query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	listings := []domain.ListingInfo{}
+	for rows.Next() {
+		var listing domain.ListingInfo
+		err := rows.Scan(&listing.ID, &listing.Title, &listing.Type, &listing.Price, &listing.Location, &listing.Bathrooms, &listing.Bedrooms, &listing.ImageURLs)
+		if err != nil {
+			return nil, err
+		}
+		listings = append(listings, listing)
+	}
+
+	return listings, nil
+}

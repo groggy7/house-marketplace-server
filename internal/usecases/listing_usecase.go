@@ -39,3 +39,7 @@ func (s *ListingUseCase) BookmarkListing(userID, listingID string) error {
 func (s *ListingUseCase) UnbookmarkListing(userID, listingID string) error {
 	return s.listingRepo.UnbookmarkListing(userID, listingID)
 }
+
+func (s *ListingUseCase) GetBookmarkedListings(userID string) ([]domain.ListingInfo, error) {
+	return s.listingRepo.GetBookmarkedListings(userID)
+}
