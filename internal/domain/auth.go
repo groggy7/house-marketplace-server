@@ -30,10 +30,14 @@ type AuthRepository interface {
 	GetUserByUsername(username string) (*User, error)
 	GetUserByEmail(email string) (*User, error)
 	CheckUserExists(userID string) (bool, error)
+	CheckUserCredentialsExist(username, email string) error
 }
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidRequest     = errors.New("invalid request")
+	ErrDuplicateUsername  = errors.New("username already exists")
+	ErrDuplicateEmail     = errors.New("email already exists")
+	ErrDatabaseError      = errors.New("database error")
 )

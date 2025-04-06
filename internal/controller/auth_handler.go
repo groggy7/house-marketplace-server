@@ -26,7 +26,16 @@ func (s *AuthHandler) Register(c *gin.Context) {
 
 	err := s.authUseCase.Register(&request)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register"})
+		switch err {
+		case domain.ErrInvalidRequest:
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case domain.ErrDuplicateUsername:
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error(), "field": "username"})
+		case domain.ErrDuplicateEmail:
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error(), "field": "email"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register"})
+		}
 		return
 	}
 

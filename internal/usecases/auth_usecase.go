@@ -24,6 +24,11 @@ func (s *AuthUseCase) Register(req *domain.RegisterRequest) error {
 		return domain.ErrInvalidRequest
 	}
 
+	// Check if a user with the given username or email already exists
+	if err := s.authRepo.CheckUserCredentialsExist(req.Username, req.Email); err != nil {
+		return err // This will be either ErrDuplicateUsername, ErrDuplicateEmail, or ErrDatabaseError
+	}
+
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return err
@@ -36,7 +41,12 @@ func (s *AuthUseCase) Register(req *domain.RegisterRequest) error {
 		Password: hashedPassword,
 	}
 
-	return s.authRepo.CreateUser(user)
+	err = s.authRepo.CreateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *AuthUseCase) Login(req *domain.LoginRequest) (*domain.User, string, error) {
