@@ -15,12 +15,12 @@ func NewAuthRepository(pool *pgxpool.Pool) domain.AuthRepository {
 	return &authRepository{pool: pool}
 }
 
-func (r *authRepository) CreateUser(user *domain.User) error {
+func (r *authRepository) CreateUser(name, username, email, password string) error {
 	query := `
 		INSERT INTO users (full_name, username, email, password)
 		VALUES ($1, $2, $3, $4)
 	`
-	_, err := r.pool.Exec(context.Background(), query, user.FullName, user.Username, user.Email, user.Password)
+	_, err := r.pool.Exec(context.Background(), query, name, username, email, password)
 	if err != nil {
 		return domain.ErrDatabaseError
 	}
@@ -49,6 +49,17 @@ func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
 	return &user, nil
 }
 
+func (r *authRepository) UpdateUser(name, avatarURL string, userID string) error {
+	query := `
+		UPDATE users SET full_name = $1, avatar_url = $2 WHERE id = $3
+	`
+	_, err := r.pool.Exec(context.Background(), query, name, avatarURL, userID)
+	if err != nil {
+		return domain.ErrDatabaseError
+	}
+	return nil
+}
+
 func (r *authRepository) CheckUserExists(userID string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`
 	var exists bool
@@ -61,7 +72,6 @@ func (r *authRepository) CheckUserExists(userID string) (bool, error) {
 }
 
 func (r *authRepository) CheckUserCredentialsExist(username, email string) error {
-	// Use a single query to check for both username and email
 	query := `
 		SELECT 
 			(SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)) as username_exists,
@@ -73,16 +83,13 @@ func (r *authRepository) CheckUserCredentialsExist(username, email string) error
 		return domain.ErrDatabaseError
 	}
 
-	// Check username first (prioritize username duplicate error)
 	if usernameExists {
 		return domain.ErrDuplicateUsername
 	}
 
-	// Then check email
 	if emailExists {
 		return domain.ErrDuplicateEmail
 	}
 
-	// No duplicates found
 	return nil
 }

@@ -44,6 +44,7 @@ func NewRouter(
 	protected.Use(auth.JWTAuthMiddleware())
 	{
 		protected.GET("/user", authHandler.CheckIsLoggedIn)
+		protected.PUT("/user", authHandler.UpdateUser)
 
 		protected.POST("/logout", authHandler.Logout)
 		protected.POST("/room", roomServer.CreateRoom)

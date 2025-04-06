@@ -97,3 +97,32 @@ func (s *AuthHandler) CheckIsLoggedIn(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User is logged in", "user": user})
 }
+
+func (s *AuthHandler) UpdateUser(c *gin.Context) {
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	userID := claims.(*auth.Claims).UserID
+
+	var request domain.UpdateUserRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	request.UserID = userID
+	err := s.authUseCase.UpdateUser(&request)
+	if err != nil {
+		switch err {
+		case domain.ErrInvalidRequest:
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+}
