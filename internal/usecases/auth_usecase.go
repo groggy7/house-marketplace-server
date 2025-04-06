@@ -16,6 +16,14 @@ func NewAuthUseCase(authRepo domain.AuthRepository) *AuthUseCase {
 }
 
 func (s *AuthUseCase) Register(req *domain.RegisterRequest) error {
+	if req.FullName == "" || req.Username == "" || req.Email == "" || req.Password == "" {
+		return domain.ErrInvalidRequest
+	}
+
+	if len(req.Password) < 8 {
+		return domain.ErrInvalidRequest
+	}
+
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return err
