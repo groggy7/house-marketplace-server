@@ -98,7 +98,7 @@ func (s *ListingHandler) BookmarkListing(c *gin.Context) {
 	}
 
 	userID := claims.(*auth.Claims).UserID
-	listingID := c.Param("id")
+	listingID := c.Param("listing_id")
 
 	if err := s.listingUseCase.BookmarkListing(userID, listingID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -116,7 +116,7 @@ func (s *ListingHandler) UnbookmarkListing(c *gin.Context) {
 	}
 
 	userID := claims.(*auth.Claims).UserID
-	listingID := c.Param("id")
+	listingID := c.Param("listing_id")
 
 	if err := s.listingUseCase.UnbookmarkListing(userID, listingID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
