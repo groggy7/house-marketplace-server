@@ -80,7 +80,7 @@ func (s *AuthUseCase) Login(req *domain.LoginRequest) (*domain.User, string, err
 }
 
 func (s *AuthUseCase) UpdateUser(req *domain.UpdateUserRequest) error {
-	if req.FullName == "" && req.AvatarURL == "" {
+	if req.FullName == "" {
 		return domain.ErrInvalidRequest
 	}
 

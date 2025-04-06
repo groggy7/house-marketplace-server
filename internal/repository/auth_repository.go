@@ -50,6 +50,16 @@ func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
 }
 
 func (r *authRepository) UpdateUser(name, avatarURL string, userID string) error {
+	if avatarURL == "" {
+		query := `
+			UPDATE users SET full_name = $1 WHERE id = $2
+		`
+		_, err := r.pool.Exec(context.Background(), query, name, userID)
+		if err != nil {
+			return domain.ErrDatabaseError
+		}
+		return nil
+	}
 	query := `
 		UPDATE users SET full_name = $1, avatar_url = $2 WHERE id = $3
 	`
