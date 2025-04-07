@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"message-server/internal/domain"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -18,11 +19,20 @@ type fileRepository struct {
 	bucketName    string
 }
 
-func NewFileRepository(credentialsPath, bucketName string) domain.FileRepository {
+func NewFileRepository() domain.FileRepository {
 	ctx := context.Background()
 
-	opt := option.WithCredentialsFile(credentialsPath)
+	firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
+	if firebaseCredentials == "" {
+		panic("FIREBASE_CREDENTIALS not set in .env")
+	}
 
+	firebaseBucket := os.Getenv("FIREBASE_BUCKET")
+	if firebaseBucket == "" {
+		panic("FIREBASE_BUCKET not set in .env")
+	}
+
+	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
 	storageClient, err := storage.NewClient(ctx, opt)
 	if err != nil {
 		panic(err)
@@ -30,7 +40,7 @@ func NewFileRepository(credentialsPath, bucketName string) domain.FileRepository
 
 	return &fileRepository{
 		storageClient: storageClient,
-		bucketName:    bucketName,
+		bucketName:    firebaseBucket,
 	}
 }
 
