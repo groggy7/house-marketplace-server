@@ -40,7 +40,7 @@ func main() {
 
 	roomUseCase := usecases.NewRoomUseCase(roomRepository)
 	authUseCase := usecases.NewAuthUseCase(authRepository)
-	listingUseCase := usecases.NewListingUseCase(listingRepository)
+	listingUseCase := usecases.NewListingUseCase(listingRepository, fileRepository)
 	fileUseCase := usecases.NewFileUseCase(fileRepository)
 
 	router := router.NewRouter(roomUseCase, authUseCase, listingUseCase, fileUseCase)

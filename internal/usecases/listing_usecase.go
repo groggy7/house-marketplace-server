@@ -6,10 +6,11 @@ import (
 
 type ListingUseCase struct {
 	listingRepo domain.ListingRepository
+	fileRepo    domain.FileRepository
 }
 
-func NewListingUseCase(listingRepo domain.ListingRepository) *ListingUseCase {
-	return &ListingUseCase{listingRepo: listingRepo}
+func NewListingUseCase(listingRepo domain.ListingRepository, fileRepo domain.FileRepository) *ListingUseCase {
+	return &ListingUseCase{listingRepo: listingRepo, fileRepo: fileRepo}
 }
 
 func (s *ListingUseCase) CreateListing(request *domain.CreateListingRequest) (string, error) {
@@ -29,6 +30,18 @@ func (s *ListingUseCase) UpdateListing(listing *domain.Listing) error {
 }
 
 func (s *ListingUseCase) DeleteListing(id string) error {
+	listing, err := s.listingRepo.GetListingByID(id)
+	if err != nil {
+		return err
+	}
+
+	for _, imageURL := range listing.ImageURLs {
+		err := s.fileRepo.DeleteFile(imageURL)
+		if err != nil {
+			return err
+		}
+	}
+
 	return s.listingRepo.DeleteListing(id)
 }
 
