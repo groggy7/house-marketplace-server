@@ -18,16 +18,16 @@ func NewListingRepository(pool *pgxpool.Pool) domain.ListingRepository {
 func (r *listingRepository) CreateListing(req *domain.CreateListingRequest) (string, error) {
 	query := `
 		INSERT INTO listings 
-		(title, description, type, price, location, bathrooms, 
+		(id, title, description, type, price, location, bathrooms, 
 		bedrooms, image_urls, is_air_conditioned, is_balcony_available,
 		is_dryer_available,  is_heated, is_parking_available, 
 		is_pool_available, is_washer_available, is_wifi_available, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING id
 	`
 
 	var id string
-	err := r.pool.QueryRow(context.Background(), query, req.Title, req.Description, req.Type,
+	err := r.pool.QueryRow(context.Background(), query, req.ID, req.Title, req.Description, req.Type,
 		req.Price, req.Location, req.Bathrooms, req.Bedrooms, req.ImageURLs,
 		req.IsAirConditioned, req.IsBalconyAvailable, req.IsDryerAvailable, req.IsHeated,
 		req.IsParkingAvailable, req.IsPoolAvailable, req.IsWasherAvailable, req.IsWifiAvailable, req.UserID).Scan(&id)
