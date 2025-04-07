@@ -14,7 +14,7 @@ type ChatHandler struct {
 	roomUseCase usecases.RoomUseCase
 }
 
-func InitRoomServer(svc *usecases.RoomUseCase) *ChatHandler {
+func InitRoomHandler(svc *usecases.RoomUseCase) *ChatHandler {
 	return &ChatHandler{
 		roomUseCase: *svc,
 	}

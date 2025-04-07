@@ -18,6 +18,16 @@ func main() {
 		panic("DB_URL not set in .env")
 	}
 
+	firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
+	if firebaseCredentials == "" {
+		panic("FIREBASE_CREDENTIALS not set in .env")
+	}
+
+	firebaseBucket := os.Getenv("FIREBASE_BUCKET")
+	if firebaseBucket == "" {
+		panic("FIREBASE_BUCKET not set in .env")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -34,14 +44,15 @@ func main() {
 	}
 
 	roomRepository := repository.NewRoomRepository(pool)
-	roomUseCase := usecases.NewRoomUseCase(roomRepository)
-
 	authRepository := repository.NewAuthRepository(pool)
-	authUseCase := usecases.NewAuthUseCase(authRepository)
-
 	listingRepository := repository.NewListingRepository(pool)
-	listingUseCase := usecases.NewListingUseCase(listingRepository)
+	fileRepository := repository.NewFileRepository(firebaseCredentials, firebaseBucket)
 
-	router := router.NewRouter(roomUseCase, authUseCase, listingUseCase)
+	roomUseCase := usecases.NewRoomUseCase(roomRepository)
+	authUseCase := usecases.NewAuthUseCase(authRepository)
+	listingUseCase := usecases.NewListingUseCase(listingRepository)
+	fileUseCase := usecases.NewFileUseCase(fileRepository)
+
+	router := router.NewRouter(roomUseCase, authUseCase, listingUseCase, fileUseCase)
 	router.Run(":" + port)
 }

@@ -33,7 +33,7 @@ type MessageServer struct {
 	mutex       sync.RWMutex
 }
 
-func InitMessageServer(svc *usecases.RoomUseCase, authSvc *usecases.AuthUseCase) *MessageServer {
+func InitMessageHandler(svc *usecases.RoomUseCase, authSvc *usecases.AuthUseCase) *MessageServer {
 	godotenv.Load()
 	frontURL := os.Getenv("FRONTEND_URL")
 

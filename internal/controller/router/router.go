@@ -13,6 +13,7 @@ func NewRouter(
 	roomUseCase *usecases.RoomUseCase,
 	authUseCase *usecases.AuthUseCase,
 	listingUseCase *usecases.ListingUseCase,
+	fileUseCase *usecases.FileUseCase,
 ) *gin.Engine {
 	router := gin.Default()
 
@@ -25,16 +26,17 @@ func NewRouter(
 
 	router.Use(cors.New(config))
 
-	wsServer := controller.InitMessageServer(roomUseCase, authUseCase)
-	roomServer := controller.InitRoomServer(roomUseCase)
+	wsHandler := controller.InitMessageHandler(roomUseCase, authUseCase)
+	roomHandler := controller.InitRoomHandler(roomUseCase)
 	authHandler := controller.NewAuthHandler(authUseCase)
 	listingHandler := controller.NewListingHandler(listingUseCase)
+	fileHandler := controller.NewFileHandler(fileUseCase)
 
 	public := router.Group("")
 	{
 		public.POST("/register", authHandler.Register)
 		public.POST("/login", authHandler.Login)
-		public.GET("/ws", wsServer.StartWebSocketServer)
+		public.GET("/ws", wsHandler.StartWebSocketServer)
 
 		public.GET("/listing", listingHandler.GetListings)
 		public.GET("/listing/:id", listingHandler.GetListingByID)
@@ -47,9 +49,9 @@ func NewRouter(
 		protected.PUT("/user", authHandler.UpdateUser)
 
 		protected.POST("/logout", authHandler.Logout)
-		protected.POST("/room", roomServer.CreateRoom)
-		protected.GET("/room", roomServer.GetRooms)
-		protected.GET("/room/messages/:room_id", roomServer.GetRoomMessages)
+		protected.POST("/room", roomHandler.CreateRoom)
+		protected.GET("/room", roomHandler.GetRooms)
+		protected.GET("/room/messages/:room_id", roomHandler.GetRoomMessages)
 
 		protected.POST("/listing", listingHandler.CreateListing)
 		protected.PUT("/listing/:id", listingHandler.UpdateListing)
@@ -58,6 +60,9 @@ func NewRouter(
 		protected.POST("/bookmark/:listing_id", listingHandler.BookmarkListing)
 		protected.DELETE("/bookmark/:listing_id", listingHandler.UnbookmarkListing)
 		protected.GET("/bookmark", listingHandler.GetBookmarkedListings)
+
+		protected.POST("/file", fileHandler.UploadFile)
+		protected.DELETE("/file", fileHandler.DeleteFile)
 	}
 
 	return router
