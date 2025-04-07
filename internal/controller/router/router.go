@@ -14,6 +14,7 @@ func NewRouter(
 	authUseCase *usecases.AuthUseCase,
 	listingUseCase *usecases.ListingUseCase,
 	fileUseCase *usecases.FileUseCase,
+	userUseCase *usecases.UserUseCase,
 ) *gin.Engine {
 	router := gin.Default()
 
@@ -31,6 +32,7 @@ func NewRouter(
 	authHandler := controller.NewAuthHandler(authUseCase)
 	listingHandler := controller.NewListingHandler(listingUseCase)
 	fileHandler := controller.NewFileHandler(fileUseCase)
+	userHandler := controller.NewUserHandler(userUseCase)
 
 	public := router.Group("")
 	{
@@ -46,7 +48,8 @@ func NewRouter(
 	protected.Use(auth.JWTAuthMiddleware())
 	{
 		protected.GET("/user", authHandler.CheckIsLoggedIn)
-		protected.PUT("/user", authHandler.UpdateUser)
+		protected.PUT("/user/info", userHandler.UpdateUserInfo)
+		protected.PUT("/user/avatar", userHandler.UpdateUserAvatar)
 
 		protected.POST("/logout", authHandler.Logout)
 		protected.POST("/room", roomHandler.CreateRoom)
@@ -61,7 +64,7 @@ func NewRouter(
 		protected.DELETE("/bookmark/:listing_id", listingHandler.UnbookmarkListing)
 		protected.GET("/bookmark", listingHandler.GetBookmarkedListings)
 
-		protected.POST("/file", fileHandler.UploadFile)
+		protected.POST("/file", fileHandler.UploadListingPicture)
 		protected.DELETE("/file", fileHandler.DeleteFile)
 	}
 

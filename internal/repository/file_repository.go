@@ -44,11 +44,44 @@ func NewFileRepository() domain.FileRepository {
 	}
 }
 
-func (r *fileRepository) UploadFile(file io.Reader, fileName, contentType string) (*domain.FileUploadResponse, error) {
+func (r *fileRepository) UploadListingPicture(file io.Reader, fileName, contentType string) (*domain.FileUploadResponse, error) {
 	ctx := context.Background()
 
 	ext := filepath.Ext(fileName)
 	filename := fmt.Sprintf("listings/%s%s", uuid.New().String(), ext)
+
+	bucket := r.storageClient.Bucket(r.bucketName)
+
+	obj := bucket.Object(filename)
+
+	w := obj.NewWriter(ctx)
+	w.ContentType = contentType
+	w.CacheControl = "public, max-age=31536000"
+
+	if _, err := io.Copy(w, file); err != nil {
+		return nil, fmt.Errorf("error copying file: %v", err)
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("error closing writer: %v", err)
+	}
+
+	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
+		return nil, fmt.Errorf("error making file public: %v", err)
+	}
+
+	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", r.bucketName, filename)
+
+	return &domain.FileUploadResponse{
+		URL: url,
+	}, nil
+}
+
+func (r *fileRepository) UploadProfilePicture(file io.Reader, fileName, contentType string) (*domain.FileUploadResponse, error) {
+	ctx := context.Background()
+
+	ext := filepath.Ext(fileName)
+	filename := fmt.Sprintf("avatars/%s%s", uuid.New().String(), ext)
 
 	bucket := r.storageClient.Bucket(r.bucketName)
 

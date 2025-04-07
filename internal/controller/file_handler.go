@@ -16,14 +16,30 @@ func NewFileHandler(fileUseCase *usecases.FileUseCase) *FileHandler {
 	return &FileHandler{fileUseCase: *fileUseCase}
 }
 
-func (s *FileHandler) UploadFile(c *gin.Context) {
+func (s *FileHandler) UploadListingPicture(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
 		return
 	}
 
-	response, err := s.fileUseCase.UploadFile(file)
+	response, err := s.fileUseCase.UploadListingPicture(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file"})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (s *FileHandler) UploadProfilePicture(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
+	}
+
+	response, err := s.fileUseCase.UploadListingPicture(file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file"})
 		return

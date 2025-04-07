@@ -17,6 +17,7 @@ type DeleteFileRequest struct {
 }
 
 type FileRepository interface {
-	UploadFile(file io.Reader, fileName, contentType string) (*FileUploadResponse, error)
+	UploadListingPicture(file io.Reader, fileName, contentType string) (*FileUploadResponse, error)
+	UploadProfilePicture(file io.Reader, fileName, contentType string) (*FileUploadResponse, error)
 	DeleteFile(url string) error
 }

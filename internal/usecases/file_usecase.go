@@ -13,7 +13,7 @@ func NewFileUseCase(fileRepo domain.FileRepository) *FileUseCase {
 	return &FileUseCase{fileRepo: fileRepo}
 }
 
-func (s *FileUseCase) UploadFile(file *multipart.FileHeader) (*domain.FileUploadResponse, error) {
+func (s *FileUseCase) UploadListingPicture(file *multipart.FileHeader) (*domain.FileUploadResponse, error) {
 	src, err := file.Open()
 	if err != nil {
 		return nil, err
@@ -26,7 +26,23 @@ func (s *FileUseCase) UploadFile(file *multipart.FileHeader) (*domain.FileUpload
 		ContentType: file.Header.Get("Content-Type"),
 	}
 
-	return s.fileRepo.UploadFile(req.File, req.FileName, req.ContentType)
+	return s.fileRepo.UploadListingPicture(req.File, req.FileName, req.ContentType)
+}
+
+func (s *FileUseCase) UploadProfilePicture(file *multipart.FileHeader) (*domain.FileUploadResponse, error) {
+	src, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
+
+	req := &domain.FileUploadRequest{
+		File:        src,
+		FileName:    file.Filename,
+		ContentType: file.Header.Get("Content-Type"),
+	}
+
+	return s.fileRepo.UploadProfilePicture(req.File, req.FileName, req.ContentType)
 }
 
 func (s *FileUseCase) DeleteFile(url string) error {

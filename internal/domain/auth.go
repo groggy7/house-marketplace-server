@@ -25,12 +25,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-type UpdateUserRequest struct {
-	FullName  string `json:"full_name"`
-	AvatarURL string `json:"avatar_url"`
-	UserID    string `json:"user_id"`
-}
-
 type AuthRepository interface {
 	CreateUser(name, username, email, password string) error
 	GetUserByUsername(username string) (*User, error)
