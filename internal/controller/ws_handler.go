@@ -130,16 +130,20 @@ func (s *MessageServer) StartWebSocketServer(c *gin.Context) {
 
 func (s *MessageServer) ping(conn *websocket.Conn, userID string) {
 	ticker := time.NewTicker(pingPeriod)
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+		s.mutex.Lock()
+		if s.clients[userID] == conn {
+			delete(s.clients, userID)
+			conn.Close()
+		}
+		s.mutex.Unlock()
+	}()
 
 	for range ticker.C {
 		conn.SetWriteDeadline(time.Now().Add(writeWait))
 		if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-			s.mutex.Lock()
-			if s.clients[userID] == conn {
-				delete(s.clients, userID)
-			}
-			s.mutex.Unlock()
+			pkg.Logger.Printf("Ping failed, terminating connection: %v", err)
 			return
 		}
 	}
@@ -170,9 +174,11 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 				return
 			}
 
-			if err == io.EOF || strings.Contains(err.Error(), "use of closed network connection") ||
+			if err == io.EOF ||
+				strings.Contains(err.Error(), "i/o timeout") ||
+				strings.Contains(err.Error(), "use of closed network connection") ||
 				strings.Contains(err.Error(), "unexpected EOF") {
-				pkg.Logger.Println("Connection appears to be closed:", err)
+				pkg.Logger.Println("Connection error, terminating:", err)
 				return
 			}
 
@@ -294,7 +300,7 @@ func (s *MessageServer) handleMessages(conn *websocket.Conn, senderID string) {
 	}
 }
 
-func (s *MessageServer) writeJSON(conn *websocket.Conn, message interface{}) bool {
+func (s *MessageServer) writeJSON(conn *websocket.Conn, message any) bool {
 	if conn == nil {
 		return false
 	}
