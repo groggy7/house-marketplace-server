@@ -46,7 +46,7 @@ func InitMessageHandler(svc *usecases.RoomUseCase, authSvc *usecases.AuthUseCase
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
-			if origin == frontURL || origin == "test_client" {
+			if origin == frontURL || origin == "http://localhost:5173" {
 				return true
 			}
 			return false
@@ -322,6 +322,7 @@ func (s *MessageServer) sendMessage(senderID, receiverID, text, roomID string) b
 		}
 
 		s.writeJSON(receiverConn, response)
+		return true
 	}
 
 	pkg.Logger.Printf("Recipient %s not connected or delivery failed, message saved to DB only", receiverID)
