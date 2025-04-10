@@ -49,6 +49,17 @@ func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
 	return &user, nil
 }
 
+func (r *authRepository) GetUserByID(id string) (*domain.User, error) {
+	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE id = $1`
+	var user domain.User
+	err := r.pool.QueryRow(context.Background(), query, id).Scan(&user.ID,
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *authRepository) UpdateUser(name, avatarURL string, userID string) error {
 	if avatarURL == "" {
 		query := `UPDATE users SET full_name = $1 WHERE id = $2`

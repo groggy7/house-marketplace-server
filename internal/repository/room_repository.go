@@ -62,9 +62,9 @@ func (db *roomRepository) GetRooms(customerID string) ([]domain.Room, error) {
 	return rooms, nil
 }
 
-func (db *roomRepository) SaveMessage(text, senderID, roomID string) error {
-	query := "INSERT INTO messages (message, sender_id, room_id) VALUES ($1, $2, $3)"
-	_, err := db.pool.Exec(context.Background(), query, text, senderID, roomID)
+func (db *roomRepository) SaveMessage(text, senderID, senderName, roomID string) error {
+	query := "INSERT INTO messages (message, sender_id, sender_name, room_id) VALUES ($1, $2, $3, $4)"
+	_, err := db.pool.Exec(context.Background(), query, text, senderID, senderName, roomID)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (db *roomRepository) CheckUserInRoom(userID, roomID string) (bool, error) {
 
 func (db *roomRepository) GetMessagesForRoom(roomID string) ([]map[string]any, error) {
 	query := `
-		SELECT id, message, sender_id, room_id, created_at 
+		SELECT id, message, sender_id, sender_name, room_id, created_at 
 		FROM messages 
 		WHERE room_id = $1 
 		ORDER BY created_at ASC
@@ -99,19 +99,20 @@ func (db *roomRepository) GetMessagesForRoom(roomID string) ([]map[string]any, e
 
 	messages := []map[string]any{}
 	for rows.Next() {
-		var id, message, senderID, roomID string
+		var id, message, senderID, senderName, roomID string
 		var createdAt any
 
-		if err := rows.Scan(&id, &message, &senderID, &roomID, &createdAt); err != nil {
+		if err := rows.Scan(&id, &message, &senderID, &senderName, &roomID, &createdAt); err != nil {
 			return nil, fmt.Errorf("error scanning message row: %w", err)
 		}
 
 		messages = append(messages, map[string]any{
-			"id":         id,
-			"message":    message,
-			"sender_id":  senderID,
-			"room_id":    roomID,
-			"created_at": createdAt,
+			"id":          id,
+			"message":     message,
+			"sender_id":   senderID,
+			"sender_name": senderName,
+			"room_id":     roomID,
+			"created_at":  createdAt,
 		})
 	}
 

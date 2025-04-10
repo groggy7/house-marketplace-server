@@ -1,13 +1,20 @@
 package usecases
 
-import "message-server/internal/domain"
+import (
+	"fmt"
+	"message-server/internal/domain"
+)
 
 type RoomUseCase struct {
 	roomRepo domain.RoomRepository
+	authRepo domain.AuthRepository
 }
 
-func NewRoomUseCase(roomRepo domain.RoomRepository) *RoomUseCase {
-	return &RoomUseCase{roomRepo: roomRepo}
+func NewRoomUseCase(roomRepo domain.RoomRepository, authRepo domain.AuthRepository) *RoomUseCase {
+	return &RoomUseCase{
+		roomRepo: roomRepo,
+		authRepo: authRepo,
+	}
 }
 
 func (s *RoomUseCase) CreateRoom(req *domain.CreateChatRoomRequest) (string, error) {
@@ -28,7 +35,12 @@ func (s *RoomUseCase) GetRooms(customerID string) ([]domain.Room, error) {
 }
 
 func (s *RoomUseCase) SaveMessage(text, senderID, roomID string) error {
-	return s.roomRepo.SaveMessage(text, senderID, roomID)
+	user, err := s.authRepo.GetUserByID(senderID)
+	if err != nil {
+		return fmt.Errorf("failed to get sender info: %w", err)
+	}
+
+	return s.roomRepo.SaveMessage(text, senderID, user.FullName, roomID)
 }
 
 func (s *RoomUseCase) CheckUserInRoom(userID, roomID string) (bool, error) {

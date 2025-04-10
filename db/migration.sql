@@ -12,6 +12,7 @@ CREATE TABLE messages (
     room_id TEXT NOT NULL,
     message TEXT NOT NULL,
     sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_name TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     read_at TIMESTAMP NULL
 );

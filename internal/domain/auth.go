@@ -29,6 +29,7 @@ type AuthRepository interface {
 	CreateUser(name, username, email, password string) error
 	GetUserByUsername(username string) (*User, error)
 	GetUserByEmail(email string) (*User, error)
+	GetUserByID(id string) (*User, error)
 	UpdateUser(name, avatarURL string, userID string) error
 	CheckUserExists(userID string) (bool, error)
 	CheckUserCredentialsExist(username, email string) error
