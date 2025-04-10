@@ -21,7 +21,9 @@ CREATE TABLE rooms (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     property_id TEXT NOT NULL,
     property_owner_id TEXT NOT NULL,
-    customer_id TEXT NOT NULL
+    customer_id TEXT NOT NULL,
+    listing_title TEXT NOT NULL,
+    listing_image TEXT NOT NULL
 );
 
 CREATE TABLE listings (

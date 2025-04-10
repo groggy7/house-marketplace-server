@@ -39,7 +39,7 @@ func main() {
 	fileRepository := repository.NewFileRepository()
 	userRepository := repository.NewUserRepository(pool)
 
-	roomUseCase := usecases.NewRoomUseCase(roomRepository, authRepository)
+	roomUseCase := usecases.NewRoomUseCase(roomRepository, authRepository, listingRepository)
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 	listingUseCase := usecases.NewListingUseCase(listingRepository, fileRepository)
 	fileUseCase := usecases.NewFileUseCase(fileRepository)

@@ -6,19 +6,33 @@ import (
 )
 
 type RoomUseCase struct {
-	roomRepo domain.RoomRepository
-	authRepo domain.AuthRepository
+	roomRepo    domain.RoomRepository
+	authRepo    domain.AuthRepository
+	listingRepo domain.ListingRepository
 }
 
-func NewRoomUseCase(roomRepo domain.RoomRepository, authRepo domain.AuthRepository) *RoomUseCase {
+func NewRoomUseCase(
+	roomRepo domain.RoomRepository,
+	authRepo domain.AuthRepository,
+	listingRepo domain.ListingRepository,
+) *RoomUseCase {
 	return &RoomUseCase{
-		roomRepo: roomRepo,
-		authRepo: authRepo,
+		roomRepo:    roomRepo,
+		authRepo:    authRepo,
+		listingRepo: listingRepo,
 	}
 }
 
 func (s *RoomUseCase) CreateRoom(req *domain.CreateChatRoomRequest) (string, error) {
-	return s.roomRepo.CreateRoom(req.PropertyID, req.PropertyOwnerID, req.CustomerID)
+	listing, err := s.listingRepo.GetListingByID(req.PropertyID)
+	if err != nil {
+		return "", err
+	}
+
+	title := listing.Title
+	image := listing.ImageURLs[0]
+
+	return s.roomRepo.CreateRoom(req.PropertyID, req.PropertyOwnerID, req.CustomerID, title, image)
 }
 
 func (s *RoomUseCase) CheckRoomExists(roomID string) (bool, error) {

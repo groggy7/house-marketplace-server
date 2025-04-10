@@ -5,6 +5,8 @@ type Room struct {
 	PropertyID      string `json:"property_id"`
 	PropertyOwnerID string `json:"property_owner_id"`
 	CustomerID      string `json:"customer_id"`
+	Title           string `json:"title"`
+	Image           string `json:"image"`
 }
 
 type AuthMessage struct {
@@ -36,7 +38,7 @@ type CreateChatRoomRequest struct {
 }
 
 type RoomRepository interface {
-	CreateRoom(propertyID, propertyOwnerID, customerID string) (string, error)
+	CreateRoom(propertyID, propertyOwnerID, customerID, listingTitle, listingImage string) (string, error)
 	CheckRoomExists(roomID string) (bool, error)
 	GetRooms(customerID string) ([]Room, error)
 	SaveMessage(text, senderID, senderName, roomID string) error
