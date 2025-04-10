@@ -39,7 +39,11 @@ func (db *roomRepository) CheckRoomExists(roomID string) (bool, error) {
 }
 
 func (db *roomRepository) GetRooms(customerID string) ([]domain.Room, error) {
-	query := "SELECT id, property_id, property_owner_id, customer_id FROM rooms WHERE customer_id = $1"
+	query := `
+		SELECT id, property_id, property_owner_id, customer_id 
+		FROM rooms 
+		WHERE customer_id = $1 OR property_owner_id = $1
+	`
 	rows, err := db.pool.Query(context.Background(), query, customerID)
 	if err != nil {
 		return nil, err
