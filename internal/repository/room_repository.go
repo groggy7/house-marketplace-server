@@ -18,21 +18,21 @@ func NewRoomRepository(pool *pgxpool.Pool) domain.RoomRepository {
 
 func (db *roomRepository) CreateRoom(
 	propertyID,
-	propertyOwnerID,
-	customerID,
-	listingTitle,
-	listingImage,
+	ownerID,
 	ownerName,
-	customerName string,
+	customerID,
+	customerName,
+	listingTitle,
+	listingImage string,
 ) (string, error) {
 	query := `
-		INSERT INTO rooms (property_id, property_owner_id, customer_id, listing_title, listing_image) 
-		VALUES ($1, $2, $3, $4, $5) 
+		INSERT INTO rooms (property_id, owner_id, owner_name, customer_id, customer_name, listing_title, listing_image) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING id
 	`
 	var roomID string
 	err := db.pool.QueryRow(context.Background(), query, propertyID,
-		propertyOwnerID, customerID, listingTitle, listingImage).Scan(&roomID)
+		ownerID, ownerName, customerID, customerName, listingTitle, listingImage).Scan(&roomID)
 	if err != nil {
 		return "", err
 	}
@@ -53,9 +53,9 @@ func (db *roomRepository) CheckRoomExists(roomID string) (bool, error) {
 
 func (db *roomRepository) GetRooms(customerID string) ([]domain.Room, error) {
 	query := `
-		SELECT id, property_id, property_owner_id, customer_id, listing_title, listing_image
+		SELECT id, property_id, owner_id, owner_name, customer_id, customer_name, listing_title, listing_image
 		FROM rooms 
-		WHERE customer_id = $1 OR property_owner_id = $1
+		WHERE customer_id = $1 OR owner_id = $1
 	`
 	rows, err := db.pool.Query(context.Background(), query, customerID)
 	if err != nil {
@@ -66,8 +66,8 @@ func (db *roomRepository) GetRooms(customerID string) ([]domain.Room, error) {
 	var rooms []domain.Room
 	for rows.Next() {
 		var room domain.Room
-		if err := rows.Scan(&room.RoomID, &room.PropertyID, &room.PropertyOwnerID,
-			&room.CustomerID, &room.Title, &room.Image); err != nil {
+		if err := rows.Scan(&room.RoomID, &room.PropertyID, &room.OwnerID,
+			&room.OwnerName, &room.CustomerID, &room.CustomerName, &room.Title, &room.Image); err != nil {
 			return nil, err
 		}
 		rooms = append(rooms, room)
@@ -87,7 +87,7 @@ func (db *roomRepository) SaveMessage(text, senderID, senderName, roomID string)
 }
 
 func (db *roomRepository) CheckUserInRoom(userID, roomID string) (bool, error) {
-	query := "SELECT EXISTS (SELECT 1 FROM rooms WHERE id = $1 AND (property_owner_id = $2 OR customer_id = $2))"
+	query := "SELECT EXISTS (SELECT 1 FROM rooms WHERE id = $1 AND (owner_id = $2 OR customer_id = $2))"
 	var exists bool
 	err := db.pool.QueryRow(context.Background(), query, roomID, userID).Scan(&exists)
 	if err != nil {

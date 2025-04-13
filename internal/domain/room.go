@@ -1,14 +1,14 @@
 package domain
 
 type Room struct {
-	RoomID          string `json:"room_id"`
-	PropertyID      string `json:"property_id"`
-	PropertyOwnerID string `json:"property_owner_id"`
-	CustomerID      string `json:"customer_id"`
-	Title           string `json:"title"`
-	Image           string `json:"image"`
-	OwnerName       string `json:"owner_name"`
-	CustomerName    string `json:"customer_name"`
+	RoomID       string `json:"room_id"`
+	PropertyID   string `json:"property_id"`
+	OwnerID      string `json:"owner_id"`
+	CustomerID   string `json:"customer_id"`
+	Title        string `json:"title"`
+	Image        string `json:"image"`
+	OwnerName    string `json:"owner_name"`
+	CustomerName string `json:"customer_name"`
 }
 
 type AuthMessage struct {

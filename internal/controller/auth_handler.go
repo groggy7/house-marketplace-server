@@ -55,7 +55,7 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		case domain.ErrInvalidCredentials:
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		case domain.ErrUserNotFound:
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User not found"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		}
