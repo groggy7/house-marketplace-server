@@ -7,6 +7,8 @@ type Room struct {
 	CustomerID      string `json:"customer_id"`
 	Title           string `json:"title"`
 	Image           string `json:"image"`
+	OwnerName       string `json:"owner_name"`
+	CustomerName    string `json:"customer_name"`
 }
 
 type AuthMessage struct {
@@ -32,13 +34,13 @@ type MessageResponse struct {
 }
 
 type CreateChatRoomRequest struct {
-	PropertyID      string `json:"property_id"`
-	PropertyOwnerID string `json:"property_owner_id"`
-	CustomerID      string `json:"-"`
+	PropertyID string `json:"property_id" validate:"required"`
+	OwnerID    string `json:"owner_id" validate:"required"`
+	CustomerID string `json:"-"`
 }
 
 type RoomRepository interface {
-	CreateRoom(propertyID, propertyOwnerID, customerID, listingTitle, listingImage string) (string, error)
+	CreateRoom(propertyID, ownerID, ownerName, customerID, customerName, title, image string) (string, error)
 	CheckRoomExists(roomID string) (bool, error)
 	GetRooms(customerID string) ([]Room, error)
 	SaveMessage(text, senderID, senderName, roomID string) error

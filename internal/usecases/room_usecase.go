@@ -32,7 +32,17 @@ func (s *RoomUseCase) CreateRoom(req *domain.CreateChatRoomRequest) (string, err
 	title := listing.Title
 	image := listing.ImageURLs[0]
 
-	return s.roomRepo.CreateRoom(req.PropertyID, req.PropertyOwnerID, req.CustomerID, title, image)
+	owner, err := s.authRepo.GetUserByID(req.OwnerID)
+	if err != nil {
+		return "", err
+	}
+
+	customer, err := s.authRepo.GetUserByID(req.CustomerID)
+	if err != nil {
+		return "", err
+	}
+
+	return s.roomRepo.CreateRoom(req.PropertyID, req.OwnerID, owner.FullName, req.CustomerID, customer.FullName, title, image)
 }
 
 func (s *RoomUseCase) CheckRoomExists(roomID string) (bool, error) {

@@ -20,10 +20,14 @@ CREATE TABLE messages (
 CREATE TABLE rooms (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     property_id TEXT NOT NULL,
-    property_owner_id TEXT NOT NULL,
+    owner_id TEXT NOT NULL,
+    owner_name TEXT NOT NULL,
     customer_id TEXT NOT NULL,
+    customer_name TEXT NOT NULL,
     listing_title TEXT NOT NULL,
-    listing_image TEXT NOT NULL
+    listing_image TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (property_id, customer_id)
 );
 
 CREATE TABLE listings (

@@ -21,7 +21,9 @@ func (db *roomRepository) CreateRoom(
 	propertyOwnerID,
 	customerID,
 	listingTitle,
-	listingImage string,
+	listingImage,
+	ownerName,
+	customerName string,
 ) (string, error) {
 	query := `
 		INSERT INTO rooms (property_id, property_owner_id, customer_id, listing_title, listing_image) 

@@ -36,8 +36,9 @@ func (s *ChatHandler) CreateRoom(c *gin.Context) {
 		return
 	}
 
-	if request.PropertyID == "" || request.PropertyOwnerID == "" || request.CustomerID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
+	errors := pkg.ValidateStruct(request)
+	if len(errors) > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors})
 		return
 	}
 

@@ -91,6 +91,7 @@ func (s *AuthHandler) CheckIsLoggedIn(c *gin.Context) {
 	username := claims.(*auth.Claims).Username
 	user, err := s.authUseCase.GetUserByUsername(username)
 	if err != nil {
+		c.SetCookie("auth_token", "", -1, "/", "", true, true)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 		return
 	}
