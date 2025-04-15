@@ -55,6 +55,10 @@ func (s *RoomUseCase) GetRooms(customerID string) ([]domain.Room, error) {
 		return nil, err
 	}
 
+	if rooms == nil {
+		return []domain.Room{}, nil
+	}
+
 	return rooms, nil
 }
 
