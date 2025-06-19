@@ -3,123 +3,104 @@ package repository
 import (
 	"context"
 	"fmt"
-	"io"
+	"log"
 	"message-server/internal/domain"
-	"os"
-	"path/filepath"
-	"strings"
+	"time"
 
-	"cloud.google.com/go/storage"
-	"github.com/google/uuid"
-	"google.golang.org/api/option"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 type fileRepository struct {
-	storageClient *storage.Client
-	bucketName    string
+	client *s3.Client
+	bucket string
 }
 
-func NewFileRepository() domain.FileRepository {
-	ctx := context.Background()
+type FileRepositoryConfig struct {
+	AccountID string
+	AccessKey string
+	SecretKey string
+	Bucket    string
+}
 
-	firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
-	if firebaseCredentials == "" {
-		panic("FIREBASE_CREDENTIALS not set in .env")
-	}
-
-	firebaseBucket := os.Getenv("FIREBASE_BUCKET")
-	if firebaseBucket == "" {
-		panic("FIREBASE_BUCKET not set in .env")
-	}
-
-	opt := option.WithCredentialsJSON([]byte(firebaseCredentials))
-	storageClient, err := storage.NewClient(ctx, opt)
+func NewFileRepository(c *FileRepositoryConfig) domain.FileRepository {
+	log.Println(c)
+	r2config, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion("auto"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(c.AccessKey, c.SecretKey, "")),
+	)
 	if err != nil {
 		panic(err)
 	}
 
+	client := s3.NewFromConfig(r2config, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", c.AccountID))
+	})
+
 	return &fileRepository{
-		storageClient: storageClient,
-		bucketName:    firebaseBucket,
+		client: client,
+		bucket: c.Bucket,
 	}
 }
 
-func (r *fileRepository) UploadListingPicture(file io.Reader, fileName, contentType string) (*domain.FileUploadResponse, error) {
-	ctx := context.Background()
+func (r *fileRepository) GenerateListingUploadURL(listingID, key, contentType string) (string, error) {
+	presignClient := s3.NewPresignClient(r.client)
 
-	ext := filepath.Ext(fileName)
-	filename := fmt.Sprintf("listings/%s%s", uuid.New().String(), ext)
+	request, err := presignClient.PresignPutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:      &r.bucket,
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
+		Metadata:    map[string]string{"listing_id": listingID},
+	}, s3.WithPresignExpires(3*time.Minute))
 
-	bucket := r.storageClient.Bucket(r.bucketName)
-
-	obj := bucket.Object(filename)
-
-	w := obj.NewWriter(ctx)
-	w.ContentType = contentType
-	w.CacheControl = "public, max-age=31536000"
-
-	if _, err := io.Copy(w, file); err != nil {
-		return nil, fmt.Errorf("error copying file: %v", err)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate upload URL: %w", err)
 	}
 
-	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("error closing writer: %v", err)
-	}
-
-	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
-		return nil, fmt.Errorf("error making file public: %v", err)
-	}
-
-	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", r.bucketName, filename)
-
-	return &domain.FileUploadResponse{
-		URL: url,
-	}, nil
+	return request.URL, nil
 }
 
-func (r *fileRepository) UploadProfilePicture(file io.Reader, fileName, contentType string) (*domain.FileUploadResponse, error) {
-	ctx := context.Background()
+func (r *fileRepository) GenerateAvatarUploadURL(key, contentType string) (string, error) {
+	presignClient := s3.NewPresignClient(r.client)
 
-	ext := filepath.Ext(fileName)
-	filename := fmt.Sprintf("avatars/%s%s", uuid.New().String(), ext)
+	request, err := presignClient.PresignPutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:      &r.bucket,
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
+	}, s3.WithPresignExpires(3*time.Minute))
 
-	bucket := r.storageClient.Bucket(r.bucketName)
-
-	obj := bucket.Object(filename)
-
-	w := obj.NewWriter(ctx)
-	w.ContentType = contentType
-	w.CacheControl = "public, max-age=31536000"
-
-	if _, err := io.Copy(w, file); err != nil {
-		return nil, fmt.Errorf("error copying file: %v", err)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate upload URL: %w", err)
 	}
 
-	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("error closing writer: %v", err)
-	}
-
-	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
-		return nil, fmt.Errorf("error making file public: %v", err)
-	}
-
-	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", r.bucketName, filename)
-
-	return &domain.FileUploadResponse{
-		URL: url,
-	}, nil
+	return request.URL, nil
 }
 
-func (r *fileRepository) DeleteFile(url string) error {
-	ctx := context.Background()
+func (r *fileRepository) GenerateDownloadURL(key string) (string, error) {
+	presignClient := s3.NewPresignClient(r.client)
 
-	bucket := r.storageClient.Bucket(r.bucketName)
+	request, err := presignClient.PresignGetObject(context.Background(), &s3.GetObjectInput{
+		Bucket: &r.bucket,
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(7*24*time.Hour))
 
-	objectName := strings.TrimPrefix(url, fmt.Sprintf("https://storage.googleapis.com/%s/", r.bucketName))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate download URL: %w", err)
+	}
 
-	obj := bucket.Object(objectName)
-	if err := obj.Delete(ctx); err != nil {
-		return fmt.Errorf("error deleting file: %v", err)
+	return request.URL, nil
+}
+
+func (r *fileRepository) DeleteFile(key string) error {
+	_, err := r.client.DeleteObject(context.Background(), &s3.DeleteObjectInput{
+		Bucket: &r.bucket,
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
 	}
 
 	return nil

@@ -1,23 +1,30 @@
 package domain
 
-import "io"
-
-type FileUploadRequest struct {
-	File        io.Reader
-	FileName    string
-	ContentType string
+type GenerateListingUploadURLRequest struct {
+	ListingID   string `json:"listing_id"`
+	ContentType string `json:"content_type"`
 }
 
-type FileUploadResponse struct {
+type GenerateAvatarUploadURLRequest struct {
+	ID          string `json:"id"`
+	ContentType string `json:"content_type"`
+}
+
+type URLResponse struct {
 	URL string `json:"url"`
 }
 
 type DeleteFileRequest struct {
-	URL string `json:"url"`
+	Key string `json:"key"`
+}
+
+type GenerateDownloadURLRequest struct {
+	Key string
 }
 
 type FileRepository interface {
-	UploadListingPicture(file io.Reader, fileName, contentType string) (*FileUploadResponse, error)
-	UploadProfilePicture(file io.Reader, fileName, contentType string) (*FileUploadResponse, error)
-	DeleteFile(url string) error
+	GenerateListingUploadURL(string, string, string) (string, error)
+	GenerateAvatarUploadURL(string, string) (string, error)
+	GenerateDownloadURL(string) (string, error)
+	DeleteFile(string) error
 }

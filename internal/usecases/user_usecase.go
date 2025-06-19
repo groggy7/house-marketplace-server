@@ -2,7 +2,6 @@ package usecases
 
 import (
 	"message-server/internal/domain"
-	"mime/multipart"
 )
 
 type UserUseCase struct {
@@ -27,7 +26,7 @@ func (s *UserUseCase) UpdateUserInfo(req *domain.UpdateUserRequest) error {
 	return s.userRepo.UpdateUser(req.FullName, "", req.UserID)
 }
 
-func (s *UserUseCase) UpdateUserAvatar(req *domain.UpdateUserRequest, avatarFile *multipart.FileHeader) error {
+func (s *UserUseCase) UpdateUserAvatar(req *domain.UpdateUserRequest) error {
 	oldUser, err := s.authRepo.GetUserByEmail(req.Email)
 	if err != nil {
 		return err
@@ -39,16 +38,5 @@ func (s *UserUseCase) UpdateUserAvatar(req *domain.UpdateUserRequest, avatarFile
 		}
 	}
 
-	src, err := avatarFile.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	uploadResponse, err := s.fileRepo.UploadProfilePicture(src, avatarFile.Filename, avatarFile.Header.Get("Content-Type"))
-	if err != nil {
-		return err
-	}
-
-	return s.userRepo.UpdateUser(oldUser.FullName, uploadResponse.URL, req.UserID)
+	return s.userRepo.UpdateUser(oldUser.FullName, req.AvatarURL, req.UserID)
 }

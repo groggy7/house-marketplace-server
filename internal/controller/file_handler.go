@@ -16,32 +16,48 @@ func NewFileHandler(fileUseCase *usecases.FileUseCase) *FileHandler {
 	return &FileHandler{fileUseCase: *fileUseCase}
 }
 
-func (s *FileHandler) UploadListingPicture(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+func (fh *FileHandler) GenerateListingUploadURL(c *gin.Context) {
+	var req *domain.GenerateListingUploadURLRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	response, err := s.fileUseCase.UploadListingPicture(file)
+	URL, err := fh.fileUseCase.GenerateListingUploadURL(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate upload URL"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, URL)
 }
 
-func (s *FileHandler) UploadProfilePicture(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+func (fh *FileHandler) GenerateAvatarUploadURL(c *gin.Context) {
+	var req *domain.GenerateAvatarUploadURLRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	response, err := s.fileUseCase.UploadListingPicture(file)
+	URL, err := fh.fileUseCase.GenerateAvatarUploadURL(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate upload URL"})
+		return
+	}
+
+	c.JSON(http.StatusOK, URL)
+}
+
+func (s *FileHandler) GenerateDownloadURL(c *gin.Context) {
+	var req domain.GenerateDownloadURLRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	response, err := s.fileUseCase.GenerateDownloadURL(req.Key)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate download URL"})
 		return
 	}
 
@@ -55,7 +71,7 @@ func (s *FileHandler) DeleteFile(c *gin.Context) {
 		return
 	}
 
-	if err := s.fileUseCase.DeleteFile(request.URL); err != nil {
+	if err := s.fileUseCase.DeleteFile(request.Key); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete file"})
 		return
 	}

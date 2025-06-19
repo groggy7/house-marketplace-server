@@ -64,7 +64,9 @@ func NewRouter(
 		protected.DELETE("/bookmark/:listing_id", listingHandler.UnbookmarkListing)
 		protected.GET("/bookmark", listingHandler.GetBookmarkedListings)
 
-		protected.POST("/file", fileHandler.UploadListingPicture)
+		protected.POST("/upload/listing", fileHandler.GenerateListingUploadURL)
+		protected.POST("/upload/avatar", fileHandler.GenerateAvatarUploadURL)
+		protected.GET("/download", fileHandler.GenerateDownloadURL)
 		protected.DELETE("/file", fileHandler.DeleteFile)
 	}
 

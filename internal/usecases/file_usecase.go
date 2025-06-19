@@ -2,7 +2,8 @@ package usecases
 
 import (
 	"message-server/internal/domain"
-	"mime/multipart"
+
+	"github.com/google/uuid"
 )
 
 type FileUseCase struct {
@@ -13,38 +14,34 @@ func NewFileUseCase(fileRepo domain.FileRepository) *FileUseCase {
 	return &FileUseCase{fileRepo: fileRepo}
 }
 
-func (s *FileUseCase) UploadListingPicture(file *multipart.FileHeader) (*domain.FileUploadResponse, error) {
-	src, err := file.Open()
+func (s *FileUseCase) GenerateListingUploadURL(req *domain.GenerateListingUploadURLRequest) (*domain.URLResponse, error) {
+	key := uuid.NewString()
+	URL, err := s.fileRepo.GenerateListingUploadURL(req.ListingID, key, req.ContentType)
 	if err != nil {
 		return nil, err
 	}
-	defer src.Close()
 
-	req := &domain.FileUploadRequest{
-		File:        src,
-		FileName:    file.Filename,
-		ContentType: file.Header.Get("Content-Type"),
-	}
-
-	return s.fileRepo.UploadListingPicture(req.File, req.FileName, req.ContentType)
+	return &domain.URLResponse{URL: URL}, nil
 }
 
-func (s *FileUseCase) UploadProfilePicture(file *multipart.FileHeader) (*domain.FileUploadResponse, error) {
-	src, err := file.Open()
+func (s *FileUseCase) GenerateAvatarUploadURL(req *domain.GenerateAvatarUploadURLRequest) (*domain.URLResponse, error) {
+	URL, err := s.fileRepo.GenerateAvatarUploadURL(req.ID, req.ContentType)
 	if err != nil {
 		return nil, err
 	}
-	defer src.Close()
 
-	req := &domain.FileUploadRequest{
-		File:        src,
-		FileName:    file.Filename,
-		ContentType: file.Header.Get("Content-Type"),
-	}
-
-	return s.fileRepo.UploadProfilePicture(req.File, req.FileName, req.ContentType)
+	return &domain.URLResponse{URL: URL}, nil
 }
 
-func (s *FileUseCase) DeleteFile(url string) error {
-	return s.fileRepo.DeleteFile(url)
+func (s *FileUseCase) GenerateDownloadURL(key string) (*domain.URLResponse, error) {
+	URL, err := s.fileRepo.GenerateDownloadURL(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.URLResponse{URL: URL}, nil
+}
+
+func (s *FileUseCase) DeleteFile(key string) error {
+	return s.fileRepo.DeleteFile(key)
 }

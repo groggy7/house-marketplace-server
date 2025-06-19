@@ -36,7 +36,12 @@ func main() {
 	roomRepository := repository.NewRoomRepository(pool)
 	authRepository := repository.NewAuthRepository(pool)
 	listingRepository := repository.NewListingRepository(pool)
-	fileRepository := repository.NewFileRepository()
+	fileRepository := repository.NewFileRepository(&repository.FileRepositoryConfig{
+		AccountID: os.Getenv("R2_ACCOUNT_ID"),
+		AccessKey: os.Getenv("R2_ACCESS_KEY"),
+		SecretKey: os.Getenv("R2_SECRET_KEY"),
+		Bucket:    os.Getenv("R2_BUCKET_NAME"),
+	})
 	userRepository := repository.NewUserRepository(pool)
 
 	roomUseCase := usecases.NewRoomUseCase(roomRepository, authRepository, listingRepository)

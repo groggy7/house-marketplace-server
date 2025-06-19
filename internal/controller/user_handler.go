@@ -58,30 +58,23 @@ func (s *UserHandler) UpdateUserAvatar(c *gin.Context) {
 		return
 	}
 
-	userID := claims.(*auth.Claims).UserID
-	email := claims.(*auth.Claims).Email
-
-	file, err := c.FormFile("avatar")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Avatar file is required"})
+	var req domain.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	request := &domain.UpdateUserRequest{
-		UserID: userID,
-		Email:  email,
-	}
+	req.UserID = claims.(*auth.Claims).UserID
+	req.Email = claims.(*auth.Claims).Email
 
-	err = s.userUseCase.UpdateUserAvatar(request, file)
+	err := s.userUseCase.UpdateUserAvatar(&req)
 	if err != nil {
 		switch err {
 		case domain.ErrInvalidRequest:
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update avatar"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		}
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Avatar updated successfully"})
 }
