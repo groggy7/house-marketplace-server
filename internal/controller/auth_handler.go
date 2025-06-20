@@ -71,7 +71,7 @@ func (s *AuthHandler) Login(c *gin.Context) {
 			"username":   user.Username,
 			"full_name":  user.FullName,
 			"email":      user.Email,
-			"avatar_url": user.AvatarURL,
+			"avatar_key": user.AvatarKey,
 		},
 	})
 }

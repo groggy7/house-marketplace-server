@@ -32,11 +32,11 @@ func (s *UserUseCase) UpdateUserAvatar(req *domain.UpdateUserRequest) error {
 		return err
 	}
 
-	if oldUser.AvatarURL != "" {
-		if err := s.fileRepo.DeleteFile(oldUser.AvatarURL); err != nil {
+	if oldUser.AvatarKey != "" {
+		if err := s.fileRepo.DeleteFile(oldUser.AvatarKey); err != nil {
 			return err
 		}
 	}
 
-	return s.userRepo.UpdateUser(oldUser.FullName, req.AvatarURL, req.UserID)
+	return s.userRepo.UpdateUser(oldUser.FullName, req.AvatarKey, req.UserID)
 }

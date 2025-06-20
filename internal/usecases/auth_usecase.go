@@ -84,7 +84,7 @@ func (s *AuthUseCase) UpdateUser(req *domain.UpdateUserRequest) error {
 		return domain.ErrInvalidRequest
 	}
 
-	return s.authRepo.UpdateUser(req.FullName, req.AvatarURL, req.UserID)
+	return s.authRepo.UpdateUser(req.FullName, req.AvatarKey, req.UserID)
 }
 
 func (s *AuthUseCase) CheckUserExists(userID string) (bool, error) {

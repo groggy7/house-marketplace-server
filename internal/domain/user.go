@@ -2,7 +2,7 @@ package domain
 
 type UpdateUserRequest struct {
 	FullName  string `json:"full_name" binding:"required"`
-	AvatarURL string `json:"avatar_url"`
+	AvatarKey string `json:"avatar_key"`
 	UserID    string `json:"-"`
 	Email     string `json:"-"`
 }

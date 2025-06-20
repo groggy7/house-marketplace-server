@@ -4,7 +4,7 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    avatar_url TEXT DEFAULT ''
+    avatar_key TEXT DEFAULT ''
 );
 
 CREATE TABLE messages (

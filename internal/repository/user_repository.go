@@ -27,7 +27,7 @@ func (r *userRepository) UpdateUser(name, avatarURL string, userID string) error
 		return nil
 	}
 	query := `
-		UPDATE users SET full_name = $1, avatar_url = $2 WHERE id = $3
+		UPDATE users SET full_name = $1, avatar_key = $2 WHERE id = $3
 	`
 	_, err := r.pool.Exec(context.Background(), query, name, avatarURL, userID)
 	if err != nil {

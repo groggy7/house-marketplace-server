@@ -28,10 +28,10 @@ func (r *authRepository) CreateUser(name, username, email, password string) erro
 }
 
 func (r *authRepository) GetUserByUsername(username string) (*domain.User, error) {
-	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE username = $1`
+	query := `SELECT id, full_name, username, email, password, avatar_key FROM users WHERE username = $1`
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, username).Scan(&user.ID,
-		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarKey)
 	if err != nil {
 		return nil, err
 	}
@@ -39,10 +39,10 @@ func (r *authRepository) GetUserByUsername(username string) (*domain.User, error
 }
 
 func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
-	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE email = $1`
+	query := `SELECT id, full_name, username, email, password, avatar_key FROM users WHERE email = $1`
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, email).Scan(&user.ID,
-		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarKey)
 	if err != nil {
 		return nil, err
 	}
@@ -50,26 +50,26 @@ func (r *authRepository) GetUserByEmail(email string) (*domain.User, error) {
 }
 
 func (r *authRepository) GetUserByID(id string) (*domain.User, error) {
-	query := `SELECT id, full_name, username, email, password, avatar_url FROM users WHERE id = $1`
+	query := `SELECT id, full_name, username, email, password, avatar_key FROM users WHERE id = $1`
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, id).Scan(&user.ID,
-		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarURL)
+		&user.FullName, &user.Username, &user.Email, &user.Password, &user.AvatarKey)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *authRepository) UpdateUser(name, avatarURL string, userID string) error {
-	if avatarURL == "" {
+func (r *authRepository) UpdateUser(name, avatarKey string, userID string) error {
+	if avatarKey == "" {
 		query := `UPDATE users SET full_name = $1 WHERE id = $2`
 		_, err := r.pool.Exec(context.Background(), query, name, userID)
 		if err != nil {
 			return domain.ErrDatabaseError
 		}
 	} else {
-		query := `UPDATE users SET full_name = $1, avatar_url = $2 WHERE id = $3`
-		_, err := r.pool.Exec(context.Background(), query, name, avatarURL, userID)
+		query := `UPDATE users SET full_name = $1, avatar_key = $2 WHERE id = $3`
+		_, err := r.pool.Exec(context.Background(), query, name, avatarKey, userID)
 		if err != nil {
 			return domain.ErrDatabaseError
 		}
