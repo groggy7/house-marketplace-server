@@ -23,13 +23,13 @@ func (fh *FileHandler) GenerateListingUploadURL(c *gin.Context) {
 		return
 	}
 
-	URL, err := fh.fileUseCase.GenerateListingUploadURL(req)
+	resp, err := fh.fileUseCase.GenerateListingUploadURL(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate upload URL"})
 		return
 	}
 
-	c.JSON(http.StatusOK, URL)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (fh *FileHandler) GenerateAvatarUploadURL(c *gin.Context) {
@@ -39,13 +39,13 @@ func (fh *FileHandler) GenerateAvatarUploadURL(c *gin.Context) {
 		return
 	}
 
-	URL, err := fh.fileUseCase.GenerateAvatarUploadURL(req)
+	resp, err := fh.fileUseCase.GenerateAvatarUploadURL(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate upload URL"})
 		return
 	}
 
-	c.JSON(http.StatusOK, URL)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (s *FileHandler) GenerateDownloadURL(c *gin.Context) {

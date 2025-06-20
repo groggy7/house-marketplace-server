@@ -21,7 +21,7 @@ func (s *FileUseCase) GenerateListingUploadURL(req *domain.GenerateListingUpload
 		return nil, err
 	}
 
-	return &domain.URLResponse{URL: URL}, nil
+	return &domain.URLResponse{URL: URL, Key: key}, nil
 }
 
 func (s *FileUseCase) GenerateAvatarUploadURL(req *domain.GenerateAvatarUploadURLRequest) (*domain.URLResponse, error) {
@@ -30,7 +30,7 @@ func (s *FileUseCase) GenerateAvatarUploadURL(req *domain.GenerateAvatarUploadUR
 		return nil, err
 	}
 
-	return &domain.URLResponse{URL: URL}, nil
+	return &domain.URLResponse{URL: URL, Key: req.ID}, nil
 }
 
 func (s *FileUseCase) GenerateDownloadURL(key string) (*domain.URLResponse, error) {

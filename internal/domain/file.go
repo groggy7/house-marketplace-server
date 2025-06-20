@@ -12,6 +12,7 @@ type GenerateAvatarUploadURLRequest struct {
 
 type URLResponse struct {
 	URL string `json:"url"`
+	Key string `json:"key"`
 }
 
 type DeleteFileRequest struct {
