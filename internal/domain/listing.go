@@ -12,7 +12,7 @@ type Listing struct {
 	Bathrooms          int       `json:"bathrooms"`
 	Bedrooms           int       `json:"bedrooms"`
 	CreatedAt          time.Time `json:"created_at"`
-	ImageURLs          []string  `json:"image_urls"`
+	ImageKeys          []string  `json:"image_keys"`
 	IsAirConditioned   bool      `json:"is_air_conditioned"`
 	IsBalconyAvailable bool      `json:"is_balcony_available"`
 	IsDryerAvailable   bool      `json:"is_dryer_available"`
@@ -32,7 +32,7 @@ type CreateListingRequest struct {
 	Location           string   `json:"location"`
 	Bathrooms          int      `json:"bathrooms"`
 	Bedrooms           int      `json:"bedrooms"`
-	ImageURLs          []string `json:"image_urls"`
+	ImageKeys          []string `json:"image_keys"`
 	IsAirConditioned   bool     `json:"is_air_conditioned"`
 	IsBalconyAvailable bool     `json:"is_balcony_available"`
 	IsDryerAvailable   bool     `json:"is_dryer_available"`
@@ -54,7 +54,7 @@ type GetListingDetailsResponse struct {
 	Bathrooms          int       `json:"bathrooms"`
 	Bedrooms           int       `json:"bedrooms"`
 	CreatedAt          time.Time `json:"created_at"`
-	ImageURLs          []string  `json:"image_urls"`
+	ImageKeys          []string  `json:"image_keys"`
 	IsAirConditioned   bool      `json:"is_air_conditioned"`
 	IsBalconyAvailable bool      `json:"is_balcony_available"`
 	IsDryerAvailable   bool      `json:"is_dryer_available"`
@@ -77,7 +77,7 @@ type ListingInfo struct {
 	Location  string   `json:"location"`
 	Bathrooms int      `json:"bathrooms"`
 	Bedrooms  int      `json:"bedrooms"`
-	ImageURLs []string `json:"image_urls"`
+	ImageKeys []string `json:"image_keys"`
 }
 
 type DeleteListingRequest struct {

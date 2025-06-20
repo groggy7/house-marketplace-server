@@ -40,7 +40,7 @@ CREATE TABLE listings (
     bathrooms INTEGER NOT NULL CHECK (bathrooms >= 0) DEFAULT 0,
     bedrooms INTEGER NOT NULL CHECK (bedrooms >= 0) DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
-    image_urls TEXT[] NOT NULL,
+    image_keys TEXT[] NOT NULL,
     is_air_conditioned BOOLEAN NOT NULL DEFAULT FALSE,
     is_balcony_available BOOLEAN NOT NULL DEFAULT FALSE,
     is_dryer_available BOOLEAN NOT NULL DEFAULT FALSE,

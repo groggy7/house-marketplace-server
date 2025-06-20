@@ -30,7 +30,7 @@ func (s *RoomUseCase) CreateRoom(req *domain.CreateChatRoomRequest) (string, err
 	}
 
 	title := listing.Title
-	image := listing.ImageURLs[0]
+	image := listing.ImageKeys[0]
 
 	owner, err := s.authRepo.GetUserByID(req.OwnerID)
 	if err != nil {

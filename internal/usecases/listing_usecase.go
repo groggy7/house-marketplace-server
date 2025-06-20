@@ -35,8 +35,8 @@ func (s *ListingUseCase) DeleteListing(id string) error {
 		return err
 	}
 
-	for _, imageURL := range listing.ImageURLs {
-		err := s.fileRepo.DeleteFile(imageURL)
+	for _, key := range listing.ImageKeys {
+		err := s.fileRepo.DeleteFile(key)
 		if err != nil {
 			return err
 		}
