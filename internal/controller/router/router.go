@@ -49,7 +49,6 @@ func NewRouter(
 	{
 		protected.GET("/user", authHandler.CheckIsLoggedIn)
 		protected.PUT("/user/info", userHandler.UpdateUserInfo)
-		protected.PUT("/user/avatar", userHandler.UpdateUserAvatar)
 
 		protected.POST("/logout", authHandler.Logout)
 		protected.POST("/room", roomHandler.CreateRoom)

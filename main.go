@@ -48,7 +48,7 @@ func main() {
 	authUseCase := usecases.NewAuthUseCase(authRepository)
 	listingUseCase := usecases.NewListingUseCase(listingRepository, fileRepository)
 	fileUseCase := usecases.NewFileUseCase(fileRepository)
-	userUseCase := usecases.NewUserUseCase(userRepository, fileRepository, authRepository)
+	userUseCase := usecases.NewUserUseCase(userRepository, authRepository)
 
 	router := router.NewRouter(roomUseCase, authUseCase, listingUseCase, fileUseCase, userUseCase)
 	router.Run(":" + port)

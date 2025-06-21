@@ -34,6 +34,12 @@ func (s *UserHandler) UpdateUserInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
+
+	if request.FullName == "" || request.AvatarKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
 	request.UserID = userID
 	request.Email = email
 
@@ -49,32 +55,4 @@ func (s *UserHandler) UpdateUserInfo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
-}
-
-func (s *UserHandler) UpdateUserAvatar(c *gin.Context) {
-	claims, exists := c.Get("claims")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	var req domain.UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	req.UserID = claims.(*auth.Claims).UserID
-	req.Email = claims.(*auth.Claims).Email
-
-	err := s.userUseCase.UpdateUserAvatar(&req)
-	if err != nil {
-		switch err {
-		case domain.ErrInvalidRequest:
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
-		}
-		return
-	}
 }
